@@ -6,7 +6,7 @@ from datetime import datetime as _datetime
 from pytsite import util as _util, router as _router, html as _html, lang as _lang, metatag as _metatag, \
     validation as _validation, http as _http, events as _events, errors as _errors
 from plugins import auth as _auth, auth_ui as _auth_ui, file_storage_odm as _file_storage_odm, file as _file, \
-    permissions as _permissions, odm_ui as _odm_ui, odm as _odm, widget as _widget, form as _form
+    permissions as _permissions, odm_ui as _odm_ui, odm as _odm, widget as _widget, form as _form, file_ui as _file_ui
 from . import _field
 
 __author__ = 'Alexander Shepetko'
@@ -77,7 +77,14 @@ class ODMRole(_odm_ui.model.UIEntity):
                 css += ' label-danger'
             perms.append(str(_html.Span(_lang.t(perm[1]), css=css)))
 
-        return self.f_get('name'), _lang.t(self.f_get('description')), ' '.join(perms)
+        role_desc = self.f_get('description')
+
+        try:
+            role_desc = _lang.t(role_desc)
+        except _lang.error.Error:
+            pass
+
+        return self.f_get('name'), role_desc, ' '.join(perms)
 
     def odm_ui_m_form_setup(self, frm: _form.Form):
         """Hook.
@@ -138,7 +145,11 @@ class ODMRole(_odm_ui.model.UIEntity):
     def odm_ui_mass_action_entity_description(self) -> str:
         """Get delete form description.
         """
-        return _lang.t(self.f_get('description'))
+        desc = self.f_get('description')
+        try:
+            return _lang.t(desc)
+        except _lang.error.Error:
+            return desc
 
 
 class Role(_auth.model.AbstractRole):
@@ -368,7 +379,12 @@ class ODMUser(_odm_ui.model.UIEntity):
             css = 'label label-default'
             if role.name == 'admin':
                 css += ' label-danger'
-            roles += str(_html.Span(_lang.t(role.description), css=css)) + ' '
+            role_desc = role.description
+            try:
+                role_desc = _lang.t(role_desc)
+            except _lang.error.Error:
+                pass
+            roles += str(_html.Span(role_desc, css=css)) + ' '
 
         status_css = 'info' if self.f_get('status') == 'active' else 'default'
         status_word = _lang.t('auth@status_' + self.f_get('status'))
@@ -416,7 +432,7 @@ class ODMUser(_odm_ui.model.UIEntity):
         frm.add_widget(content_wrapper)
 
         # Image
-        pic_wrapper.append_child(_file.widget.ImagesUpload(
+        pic_wrapper.append_child(_file_ui.widget.ImagesUpload(
             weight=10,
             uid='picture',
             value=self.f_get('picture'),

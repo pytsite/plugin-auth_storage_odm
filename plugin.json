@@ -1,6 +1,6 @@
 {
   "name": "auth_storage_odm",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": {
     "en": "Auth ODM Storage Driver",
     "ru": "Auth ODM Storage Driver",
@@ -17,10 +17,12 @@
     "plugins": [
       "admin",
       "auth",
+      "auth_ui",
       "odm",
       "odm_ui",
       "file",
       "file_storage_odm",
+      "file_ui",
       "form",
       "font_awesome",
       "permissions",
