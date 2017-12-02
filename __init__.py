@@ -2,7 +2,6 @@
 """
 # Public API
 from . import _model as model, _field as field
-from ._driver import Driver
 
 __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
@@ -12,6 +11,7 @@ __license__ = 'MIT'
 def _init():
     from pytsite import lang, router
     from plugins import auth, odm, admin
+    from . import _driver
 
     # Resources
     lang.register_package(__name__)
@@ -36,7 +36,7 @@ def _init():
                            permissions='odm_auth.view.role')
 
     # Register storage driver
-    auth.register_storage_driver(Driver())
+    auth.register_storage_driver(_driver.Storage())
 
 
 _init()

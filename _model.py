@@ -6,7 +6,7 @@ from datetime import datetime as _datetime
 from pytsite import util as _util, router as _router, html as _html, lang as _lang, metatag as _metatag, \
     validation as _validation, http as _http, events as _events, errors as _errors
 from plugins import auth as _auth, auth_ui as _auth_ui, file_storage_odm as _file_storage_odm, file as _file, \
-    permissions as _permissions, odm_ui as _odm_ui, odm as _odm, widget as _widget, form as _form, file_ui as _file_ui
+    permissions as _permissions, odm as _odm, odm_ui as _odm_ui, widget as _widget, form as _form, file_ui as _file_ui
 from . import _field
 
 __author__ = 'Alexander Shepetko'
@@ -170,7 +170,7 @@ class Role(_auth.model.AbstractRole):
     def has_field(self, field_name: str) -> bool:
         return self._entity.has_field(field_name)
 
-    def get_field(self, field_name: str):
+    def get_field(self, field_name: str, **kwargs):
         return self._entity.f_get(field_name)
 
     def set_field(self, field_name: str, value):
@@ -400,7 +400,7 @@ class ODMUser(_odm_ui.model.UIEntity):
         return login, full_name, roles, status, p_is_public, is_online, created, last_activity
 
     def odm_ui_view_url(self) -> str:
-        return _router.rule_url('auth_profile@profile_view', {'nickname': self.f_get('nickname')})
+        return _router.rule_url('auth_ui@profile_view', {'nickname': self.f_get('nickname')})
 
     def odm_ui_m_form_setup(self, frm: _form.Form):
         """Hook.
@@ -573,7 +573,7 @@ class ODMUser(_odm_ui.model.UIEntity):
 
         # Roles
         if current_user.has_permission('odm_auth.modify.user'):
-            content_wrapper.append_child(_auth_ui.widget.RoleCheckboxes(
+            content_wrapper.append_child(_auth_ui.widget.RolesCheckboxes(
                 weight=140,
                 uid='roles',
                 label=self.t('roles'),
@@ -608,6 +608,10 @@ class User(_auth.model.AbstractUser):
     @property
     def uid(self) -> str:
         return str(self._entity.id)
+
+    @property
+    def is_modified(self) -> bool:
+        return self._entity.is_modified
 
     @property
     def created(self) -> str:
@@ -659,14 +663,6 @@ class User(_auth.model.AbstractUser):
             self._entity.f_sub(field_name, value)
 
         return self
-
-    @property
-    def is_modified(self) -> bool:
-        return self._entity.is_modified
-
-    @property
-    def uid(self) -> str:
-        return str(self._entity.id)
 
     def is_follows(self, user_to_check: _auth.model.AbstractUser) -> bool:
         return bool(_odm.find('follower').eq('follower', self).eq('follows', user_to_check).count())

@@ -1,7 +1,7 @@
-"""PytSite Authentication ODM Storage Driver.
+"""PytSite Authentication ODM Storage Driver
 """
 from typing import Iterable as _Iterable
-from plugins import form as _form, auth as _auth, odm as _odm, odm_ui as _odm_ui
+from plugins import auth as _auth, odm as _odm
 from . import _model
 
 __author__ = 'Alexander Shepetko'
@@ -9,7 +9,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 
-class Driver(_auth.driver.Storage):
+class Storage(_auth.driver.Storage):
     def get_name(self) -> str:
         """Get driver's name.
         """
@@ -33,7 +33,7 @@ class Driver(_auth.driver.Storage):
         else:
             raise RuntimeError("Either role's name or UID should be specified.")
 
-        role_entity = f.first()
+        role_entity = f.first()  # type: _model.ODMRole
         if not role_entity:
             raise _auth.error.RoleNotExist("Role '{}' does not exist.".format(name))
 
@@ -140,6 +140,3 @@ class Driver(_auth.driver.Storage):
                 f.eq(k, v)
 
         return f.count()
-
-    def get_user_modify_form(self, user: _auth.model.AbstractUser = None) -> _form.Form:
-        return _odm_ui.get_m_form('user', user.uid) if user else _odm_ui.get_m_form('user')
