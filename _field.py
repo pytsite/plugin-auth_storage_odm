@@ -196,7 +196,7 @@ class Users(User):
         for uid in value:
             try:
                 r.append(_auth.get_user(uid=uid))
-            except _auth.error.UserNotExist:
+            except _auth.error.UserNotFound:
                 pass
 
         return tuple(r)

@@ -304,7 +304,7 @@ class ODMUser(_odm_ui.model.UIEntity):
                 if user.nickname == self.f_get('nickname'):
                     return s
 
-            except _auth.error.UserNotExist:
+            except _auth.error.UserNotFound:
                 return nickname
 
             cnt += 1
