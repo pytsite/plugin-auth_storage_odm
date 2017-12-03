@@ -1,12 +1,8 @@
 """PytSite Authorization ODM Storage Models
 """
 import hashlib as _hashlib
-from typing import Optional as _Optional, Tuple as _Tuple
-from datetime import datetime as _datetime
-from pytsite import util as _util, router as _router, html as _html, lang as _lang, metatag as _metatag, \
-    validation as _validation, http as _http, events as _events, errors as _errors
-from plugins import auth as _auth, auth_ui as _auth_ui, file_storage_odm as _file_storage_odm, file as _file, \
-    permissions as _permissions, odm as _odm, odm_ui as _odm_ui, widget as _widget, form as _form, file_ui as _file_ui
+from pytsite import util as _util, events as _events, errors as _errors
+from plugins import auth as _auth, file_storage_odm as _file_storage_odm, file as _file, odm as _odm
 from . import _field
 
 __author__ = 'Alexander Shepetko'
@@ -14,7 +10,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 
-class ODMRole(_odm_ui.model.UIEntity):
+class ODMRole(_odm.model.Entity):
     @classmethod
     def odm_auth_permissions_group(cls) -> str:
         return 'security'
@@ -50,106 +46,6 @@ class ODMRole(_odm_ui.model.UIEntity):
                 raise _errors.ForbidDeletion(self.t('role_used_by_user', {'user': user.login}))
 
         _events.fire('auth.role.delete', role=_auth.get_role(uid=str(self.id)))
-
-    @classmethod
-    def odm_ui_browser_setup(cls, browser: _odm_ui.Browser):
-        browser.data_fields = [
-            ('name', 'auth_storage_odm@name'),
-            ('description', 'auth_storage_odm@description'),
-            ('permissions', 'auth_storage_odm@permissions', False),
-        ]
-
-        browser.default_sort_field = 'name'
-
-    def odm_ui_browser_row(self) -> _Optional[_Tuple]:
-        if self.f_get('name') == 'admin':
-            return
-
-        perms = []
-        for perm_name in self.f_get('permissions'):
-            # If permission was renamed or deleted (sometimes it happens), juts ignore it
-            if not _permissions.is_permission_defined(perm_name):
-                continue
-
-            perm = _permissions.get_permission(perm_name)
-            css = 'label label-default permission-' + perm[0]
-            if perm[0] == 'admin':
-                css += ' label-danger'
-            perms.append(str(_html.Span(_lang.t(perm[1]), css=css)))
-
-        role_desc = self.f_get('description')
-
-        try:
-            role_desc = _lang.t(role_desc)
-        except _lang.error.Error:
-            pass
-
-        return self.f_get('name'), role_desc, ' '.join(perms)
-
-    def odm_ui_m_form_setup(self, frm: _form.Form):
-        """Hook.
-        """
-        # Admin role cannot be changed
-        if self.f_get('name') == 'admin':
-            raise _http.error.Forbidden()
-
-    def odm_ui_m_form_setup_widgets(self, frm: _form.Form):
-        """Hook.
-        """
-        frm.add_widget(_widget.input.Text(
-            weight=10,
-            uid='name',
-            value=self.f_get('name'),
-            label=self.t('name'),
-            required=True,
-        ))
-
-        frm.add_widget(_widget.input.Text(
-            weight=20,
-            uid='description',
-            value=self.f_get('description'),
-            label=self.t('description'),
-            required=True,
-        ))
-
-        # Permissions tabs
-        perms_tabs = _widget.select.Tabs(
-            uid='permissions-tabs',
-            weight=30,
-            label=self.t('permissions')
-        )
-
-        # Permissions tabs content
-        for g_name, g_desc in sorted(_permissions.get_permission_groups().items(), key=lambda x: x[0]):
-            if g_name == 'auth':
-                continue
-
-            perms = _permissions.get_permissions(g_name)
-            if not perms:
-                continue
-
-            # Tab
-            tab_id = 'permissions-' + g_name
-            perms_tabs.add_tab(tab_id, _lang.t(g_desc))
-
-            # Tab's content
-            perms_tabs.append_child(_widget.select.Checkboxes(
-                uid='permission-checkboxes-' + tab_id,
-                name='permissions',
-                items=[(p[0], _lang.t(p[1])) for p in perms],
-                value=self.f_get('permissions'),
-            ), tab_id)
-
-        frm.add_widget(perms_tabs)
-
-    def odm_ui_mass_action_entity_description(self) -> str:
-        """Get delete form description.
-        """
-        desc = self.f_get('description')
-        try:
-            return _lang.t(desc)
-        except _lang.error.Error:
-            return desc
 
 
 class Role(_auth.model.AbstractRole):
@@ -207,7 +103,7 @@ class Role(_auth.model.AbstractRole):
         return self
 
 
-class ODMUser(_odm_ui.model.UIEntity):
+class ODMUser(_odm.model.Entity):
     """ODM model to store information about user.
     """
 
@@ -352,246 +248,6 @@ class ODMUser(_odm_ui.model.UIEntity):
             except _odm.error.EntityDeleted:
                 # Entity was deleted by another instance
                 pass
-
-    @classmethod
-    def odm_ui_browser_setup(cls, browser: _odm_ui.Browser):
-        browser.data_fields = [
-            ('login', 'auth_storage_odm@login'),
-            ('full_name', 'auth_storage_odm@full_name', False),
-            ('roles', 'auth_storage_odm@roles', False),
-            ('status', 'auth_storage_odm@status'),
-            ('profile_is_public', 'auth_storage_odm@profile_is_public'),
-            ('is_online', 'auth_storage_odm@is_online'),
-            ('created', 'auth_storage_odm@created'),
-            ('last_activity', 'auth_storage_odm@last_activity'),
-        ]
-
-        browser.default_sort_field = 'last_activity'
-        browser.default_sort_order = 'desc'
-
-    def odm_ui_browser_row(self) -> _Tuple:
-        yes = _lang.t('auth_storage_odm@word_yes')
-
-        login = '<a href="' + self.url + '">' + self.f_get('login') + '</a>'
-
-        roles = ''
-        for role in sorted(self.f_get('roles'), key=lambda rl: rl.name):
-            css = 'label label-default'
-            if role.name == 'admin':
-                css += ' label-danger'
-            role_desc = role.description
-            try:
-                role_desc = _lang.t(role_desc)
-            except _lang.error.Error:
-                pass
-            roles += str(_html.Span(role_desc, css=css)) + ' '
-
-        status_css = 'info' if self.f_get('status') == 'active' else 'default'
-        status_word = _lang.t('auth@status_' + self.f_get('status'))
-        status = '<span class="label label-{}">{}</span>'.format(status_css, status_word)
-
-        p_is_public = '<span class="label label-info">{}</span>'.format(yes) if self.f_get('profile_is_public') else '',
-        is_online = '<span class="label label-success">{}</span>'.format(yes) \
-            if (_datetime.now() - self.f_get('last_activity')).seconds < 180 else ''
-        created = _lang.pretty_date_time(self.created)
-        last_activity = _lang.pretty_date_time(self.f_get('last_activity'))
-        full_name = self.f_get('first_name') + ' ' + self.f_get('last_name')
-
-        return login, full_name, roles, status, p_is_public, is_online, created, last_activity
-
-    def odm_ui_view_url(self) -> str:
-        return _router.rule_url('auth_ui@profile_view', {'nickname': self.f_get('nickname')})
-
-    def odm_ui_m_form_setup(self, frm: _form.Form):
-        """Hook.
-        """
-        frm.area_footer_css += ' text-center'
-        frm.area_body_css += ' row'
-
-        _metatag.t_set('title', self.t('profile_edit'))
-
-    def odm_ui_m_form_setup_widgets(self, frm: _form.Form):
-        """Hook.
-        """
-        current_user = _auth.get_current_user()
-
-        # Picture wrapper
-        pic_wrapper = _widget.Container(
-            uid='picture-wrapper',
-            weight=2,
-            css='col-xs-12 col-sm-4 col-lg-3',
-        )
-        frm.add_widget(pic_wrapper)
-
-        # Content wrapper
-        content_wrapper = _widget.Container(
-            uid='content-wrapper',
-            weight=4,
-            css='col-xs-12 col-sm-8 col-lg-9',
-        )
-        frm.add_widget(content_wrapper)
-
-        # Image
-        pic_wrapper.append_child(_file_ui.widget.ImagesUpload(
-            weight=10,
-            uid='picture',
-            value=self.f_get('picture'),
-            max_file_size=1,
-            show_numbers=False,
-            dnd=False,
-            slot_css='col-xs-B-12 col-xs-6 col-sm-12',
-        ))
-
-        # Profile is public
-        content_wrapper.append_child(_widget.select.Checkbox(
-            weight=10,
-            uid='profile_is_public',
-            value=self.f_get('profile_is_public'),
-            label=self.t('profile_is_public'),
-        ))
-
-        # Login
-        if current_user.has_permission('odm_auth.modify.user'):
-            content_wrapper.append_child(_widget.input.Email(
-                weight=30,
-                uid='login',
-                value=self.f_get('login'),
-                label=self.t('login'),
-                required=True,
-            ))
-            frm.add_rule('login', _odm.validation.FieldUnique(
-                'auth_storage_odm@this_login_already_used',
-                model='user',
-                field='login',
-                exclude_ids=self.id
-            ))
-
-        # Nickname
-        content_wrapper.append_child(_widget.input.Text(
-            weight=40,
-            uid='nickname',
-            value=self.f_get('nickname'),
-            label=self.t('nickname'),
-            required=True,
-        ))
-        frm.add_rules('nickname', (
-            _auth.user_nickname_rule,
-            _odm.validation.FieldUnique(
-                msg_id='auth_storage_odm@this_nickname_already_used',
-                model=self.model,
-                field='nickname',
-                exclude_ids=self.id
-            )
-        ))
-
-        # First name
-        content_wrapper.append_child(_widget.input.Text(
-            weight=50,
-            uid='first_name',
-            value=self.f_get('first_name'),
-            label=self.t('first_name'),
-            required=True,
-        ))
-
-        # Last name
-        content_wrapper.append_child(_widget.input.Text(
-            weight=60,
-            uid='last_name',
-            value=self.f_get('last_name'),
-            label=self.t('last_name'),
-        ))
-
-        # Email
-        content_wrapper.append_child(_widget.input.Email(
-            weight=70,
-            uid='email',
-            value=self.f_get('email'),
-            label=self.t('email'),
-            required=True,
-        ))
-        frm.add_rule('email', _odm.validation.FieldUnique(
-            msg_id='auth_storage_odm@this_email_already_used',
-            model=self.model,
-            field='email',
-            exclude_ids=self.id
-        ))
-
-        # Password
-        content_wrapper.append_child(_widget.input.Password(
-            weight=80,
-            uid='password',
-            label=self.t('new_password'),
-        ))
-
-        # Country
-        content_wrapper.append_child(_widget.input.Text(
-            weight=90,
-            uid='country',
-            label=self.t('country'),
-            value=self.f_get('country'),
-        ))
-
-        # City
-        content_wrapper.append_child(_widget.input.Text(
-            weight=100,
-            uid='city',
-            label=self.t('city'),
-            value=self.f_get('city'),
-        ))
-
-        # Description
-        content_wrapper.append_child(_widget.input.TextArea(
-            weight=110,
-            uid='description',
-            value=self.f_get('description'),
-            label=self.t('about_yourself'),
-            max_length=1024,
-        ))
-
-        # Status
-        if current_user.has_permission('odm_auth.modify.user'):
-            content_wrapper.append_child(_widget.select.Select(
-                weight=120,
-                uid='status',
-                value=self.f_get('status'),
-                label=self.t('status'),
-                items=_auth.get_user_statuses(),
-                h_size='col-sm-5 col-md-4 col-lg-3',
-                required=True,
-            ))
-
-        # URLs
-        content_wrapper.append_child(_widget.input.StringList(
-            weight=130,
-            uid='urls',
-            label=self.t('social_links'),
-            value=self.f_get('urls'),
-            max_values=5,
-            add_btn_label=self.t('add_link'),
-        ))
-        frm.add_rule('urls', _validation.rule.Url())
-
-        # Roles
-        if current_user.has_permission('odm_auth.modify.user'):
-            content_wrapper.append_child(_auth_ui.widget.RolesCheckboxes(
-                weight=140,
-                uid='roles',
-                label=self.t('roles'),
-                value=self.f_get('roles'),
-            ))
-
-    def odm_ui_mass_action_entity_description(self) -> str:
-        return '{} ({} {})'.format(self.f_get('login'), self.f_get('first_name'), self.f_get('last_name'))
-
-    def odm_auth_check_permission(self, perm: str, user: _auth.model.AbstractUser = None) -> bool:
-        if not user:
-            user = _auth.get_current_user()
-
-        # Users can modify themselves
-        if perm in ('modify', 'modify_own') and user.uid == str(self.id):
-            return True
-
-        return super().odm_auth_check_permission(perm, user)
 
 
 class User(_auth.model.AbstractUser):
