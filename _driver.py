@@ -35,7 +35,7 @@ class Storage(_auth.driver.Storage):
 
         role_entity = f.first()  # type: _model.ODMRole
         if not role_entity:
-            raise _auth.error.RoleNotExist("Role '{}' does not exist.".format(name))
+            raise _auth.error.RoleNotFound(name)
 
         return _model.Role(role_entity)
 

@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 1.4 (2017-12-04)
+
+Support for last `auth` plugin update.
+
+
 ### 1.3 (2017-12-03)
 
 Parta of the code moved to `auth_storage_odm_ui` package.
