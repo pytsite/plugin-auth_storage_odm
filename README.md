@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 1.4.2 (2017-12-07)
+
+Fixed init code.
+
+
 ### 1.4.1 (2017-12-07)
 
 Fixed init code.

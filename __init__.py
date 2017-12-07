@@ -3,7 +3,7 @@
 from pytsite import plugman as _plugman
 
 # Public API
-if _plugman.is_loaded(__name__):
+if _plugman.is_installed(__name__):
     from . import _model as model, _field as field
 
 __author__ = 'Alexander Shepetko'
