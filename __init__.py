@@ -1,14 +1,17 @@
 """PytSIte Auth ODM Storage Driver Plugin
 """
+from pytsite import plugman as _plugman
+
 # Public API
-from . import _model as model, _field as field
+if _plugman.is_loaded(__name__):
+    from . import _model as model, _field as field
 
 __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 
-def _init():
+def plugin_load():
     from plugins import auth, odm
     from . import _driver
 
@@ -20,6 +23,3 @@ def _init():
 
     # Register storage driver
     auth.register_storage_driver(_driver.Storage())
-
-
-_init()
