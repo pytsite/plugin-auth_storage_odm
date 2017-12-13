@@ -1,14 +1,14 @@
 """PytSIte Auth ODM Storage Driver Plugin
 """
-from pytsite import plugman as _plugman
-
-# Public API
-if _plugman.is_installed(__name__):
-    from . import _model as model, _field as field
-
 __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
+
+from pytsite import plugman as _plugman
+
+if _plugman.is_installed(__name__):
+    # Public API
+    from . import _model as model, _field as field
 
 
 def plugin_load():

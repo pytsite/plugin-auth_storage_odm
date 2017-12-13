@@ -33,9 +33,9 @@ class ODMRole(_odm.model.Entity):
         role = _auth.get_role(uid=str(self.id))
 
         if first_save:
-            _events.fire('auth.role.create', role=role)
+            _events.fire('auth@role.create', role=role)
 
-        _events.fire('auth.role.save', role=role)
+        _events.fire('auth@role.save', role=role)
 
     def _pre_delete(self, **kwargs):
         """Hook.
@@ -45,7 +45,7 @@ class ODMRole(_odm.model.Entity):
             if user.has_role(self.f_get('name')):
                 raise _errors.ForbidDeletion(self.t('role_used_by_user', {'user': user.login}))
 
-        _events.fire('auth.role.delete', role=_auth.get_role(uid=str(self.id)))
+        _events.fire('auth@role.delete', role=_auth.get_role(uid=str(self.id)))
 
 
 class Role(_auth.model.AbstractRole):
@@ -225,9 +225,9 @@ class ODMUser(_odm.model.Entity):
         user = _auth.get_user(uid=str(self.id))
 
         if first_save:
-            _events.fire('auth.user.create', user=user)
+            _events.fire('auth@user.create', user=user)
 
-        _events.fire('auth.user.save', user=user)
+        _events.fire('auth@user.save', user=user)
 
     def _pre_delete(self, **kwargs):
 
@@ -236,7 +236,7 @@ class ODMUser(_odm.model.Entity):
         if str(self.id) == _auth.get_current_user().uid:
             raise _errors.ForbidDeletion(self.t('you_cannot_delete_yourself'))
 
-        _events.fire('auth.user.delete', user=_auth.get_user(uid=str(self.id)))
+        _events.fire('auth@user.delete', user=_auth.get_user(uid=str(self.id)))
 
     def _after_delete(self, **kwargs):
         """Hook.
