@@ -1,13 +1,13 @@
 """PytSite Authorization ODM Storage Models
 """
+__author__ = 'Alexander Shepetko'
+__email__ = 'a@shepetko.com'
+__license__ = 'MIT'
+
 import hashlib as _hashlib
 from pytsite import util as _util, events as _events, errors as _errors
 from plugins import auth as _auth, file_storage_odm as _file_storage_odm, file as _file, odm as _odm
 from . import _field
-
-__author__ = 'Alexander Shepetko'
-__email__ = 'a@shepetko.com'
-__license__ = 'MIT'
 
 
 class ODMRole(_odm.model.Entity):
@@ -126,6 +126,7 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.String('last_name'))
         self.define_field(_odm.field.String('description'))
         self.define_field(_odm.field.DateTime('birth_date'))
+        self.define_field(_odm.field.String('timezone'))
         self.define_field(_odm.field.DateTime('last_sign_in'))
         self.define_field(_odm.field.DateTime('last_activity'))
         self.define_field(_odm.field.Integer('sign_in_count'))
