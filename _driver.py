@@ -1,6 +1,7 @@
 """PytSite Authentication ODM Storage Driver
 """
 from typing import Iterable as _Iterable
+from pytsite import validation as _validation, logger as _logger
 from plugins import auth as _auth, odm as _odm
 from . import _model
 
@@ -61,7 +62,17 @@ class Storage(_auth.driver.Storage):
 
     def create_user(self, login: str, password: str = None) -> _auth.model.AbstractUser:
         user_entity = _odm.dispense('user')  # type: _model.ODMUser
-        user_entity.f_set('login', login).f_set('email', login).f_set('password', password)
+        user_entity.f_set_multiple({
+            'login': login,
+            'password': password,
+        })
+
+        # If login is an email address, use it
+        try:
+            _validation.rule.Email(login).validate()
+            user_entity.f_set('email', login)
+        except _validation.error.RuleError:
+            pass
 
         if login not in (_auth.model.SYSTEM_USER_LOGIN, _auth.model.ANONYMOUS_USER_LOGIN):
             user_entity.save()
@@ -79,11 +90,12 @@ class Storage(_auth.driver.Storage):
         elif uid is not None:
             f.eq('_id', uid)
         else:
-            raise RuntimeError('User search criteria was not specified.')
+            raise RuntimeError('User search criteria was not specified')
 
         user_entity = f.first()  # type: _model.ODMUser
         if not user_entity:
-            raise _auth.error.UserNotFound("User not exist: login={}, nickname={}, uid={}".format(login, nickname, uid))
+            _logger.warn("User not exist: login={}, nickname={}, uid={}".format(login, nickname, uid))
+            raise _auth.error.UserNotFound()
 
         return _model.User(user_entity)
 
