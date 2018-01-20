@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 1.6.2 (2017-01-20)
+
+`plugin.json` fixed.
+
+
 ### 1.6.1 (2017-01-18)
 
 `create_user`() refactored.
