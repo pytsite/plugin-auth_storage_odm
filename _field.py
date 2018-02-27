@@ -1,7 +1,7 @@
 """PytSite Auth Storage ODM Fields.
 """
 from bson import DBRef as _DBRef
-from typing import Tuple as _Tuple, List as _List, Iterable as _Iterable, Optional as _Optional, Union as _Union
+from typing import Tuple as _Tuple, List as _List, Optional as _Optional, Union as _Union
 from plugins import auth as _auth, odm as _odm
 
 __author__ = 'Alexander Shepetko'
@@ -25,7 +25,7 @@ class Roles(_odm.field.UniqueStringList):
     def _on_get(self, value: _List[str], **kwargs) -> _Tuple[_auth.model.AbstractRole, ...]:
         return tuple([_auth.get_role(uid=role_uid) for role_uid in value])
 
-    def _on_set(self, value: _Iterable, **kwargs) -> _List[str]:
+    def _on_set(self, value: _Union[list, tuple], **kwargs) -> _List[str]:
         """Hook
         """
         if value is None:
@@ -115,24 +115,26 @@ class User(_odm.field.Abstract):
 
         return user
 
-    def _on_set(self, value, **kwargs) -> str:
+    def _on_set(self, raw_value, **kwargs) -> _Optional[str]:
         """Hook
 
         Internally this field stores only user's UID as string.
         """
+        if raw_value is None:
+            return raw_value
 
         # To avoid infinite recursion on ODM entity creation
         if kwargs.get('init') or kwargs.get('from_db'):
-            return self._resolve_user_uid(value)
+            return self._resolve_user_uid(raw_value)
 
-        value = self._check_user(self._resolve_user(value))
+        raw_value = self._check_user(self._resolve_user(raw_value))
 
-        if value.is_anonymous:
+        if raw_value.is_anonymous:
             return 'ANONYMOUS'
-        elif value.is_system:
+        elif raw_value.is_system:
             return 'SYSTEM'
 
-        return value.uid
+        return raw_value.uid
 
     def _on_get(self, value: str, **kwargs) -> _Optional[_auth.model.AbstractUser]:
         """Hook
@@ -177,17 +179,20 @@ class Users(User):
 
         super().__init__(name, **kwargs)
 
-    def _on_set(self, value: _Union[list, tuple], **kwargs) -> _List[str]:
+    def _on_set(self, raw_value: _Union[list, tuple], **kwargs) -> _List[str]:
         """Hook
         """
-        if not isinstance(value, (list, tuple)):
-            raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(value)))
+        if raw_value is None:
+            return []
+
+        if not isinstance(raw_value, (list, tuple)):
+            raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
         # To avoid infinite recursion on ODM entity creation
         if kwargs.get('init') or kwargs.get('from_db'):
-            return [self._resolve_user_uid(v) for v in value]
+            return [self._resolve_user_uid(v) for v in raw_value]
 
-        return [self._check_user(self._resolve_user(v)).uid for v in value]
+        return [self._check_user(self._resolve_user(v)).uid for v in raw_value]
 
     def _on_get(self, value: list, **kwargs) -> _Tuple[_auth.model.AbstractUser, ...]:
         """Hook

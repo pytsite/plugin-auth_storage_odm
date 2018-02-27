@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 1.6.3 (2017-02-27)
+
+Fields bugfix.
+
+
 ### 1.6.2 (2017-01-20)
 
 `plugin.json` fixed.
