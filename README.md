@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 1.7.2 (2017-03-24)
+
+`plugin.json` fixed.
+
+
 ### 1.7.1 (2017-03-24)
 
 Values hanling issues in `field` fixed.
