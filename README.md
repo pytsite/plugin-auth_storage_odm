@@ -4,6 +4,14 @@
 ## Changelog
 
 
+### 1.7 (2017-03-24)
+
+- Support of `auth-1.11` added.
+- New API methods added: `on_odm_setup_fields_role()` and
+  `on_odm_setup_fields_user()`.
+- Models classes moved directly to the public API.
+
+
 ### 1.6.3 (2017-02-27)
 
 Fields bugfix.

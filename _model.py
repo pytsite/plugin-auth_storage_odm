@@ -79,7 +79,7 @@ class Role(_auth.model.AbstractRole):
 
         return self
 
-    def remove_from_field(self, field_name: str, value):
+    def sub_from_field(self, field_name: str, value):
         self._entity.f_sub(field_name, value)
 
         return self
@@ -311,7 +311,7 @@ class User(_auth.model.AbstractUser):
 
         return self
 
-    def remove_from_field(self, field_name: str, value):
+    def sub_from_field(self, field_name: str, value):
         if field_name == 'follows':
             _odm.find('follower').eq('follower', self).eq('follows', value).delete()
         elif field_name == 'blocked_users':
