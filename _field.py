@@ -1,46 +1,78 @@
 """PytSite Auth Storage ODM Fields.
 """
-from bson import DBRef as _DBRef
-from typing import Tuple as _Tuple, List as _List, Optional as _Optional, Union as _Union
-from plugins import auth as _auth, odm as _odm
-
 __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
+from bson import DBRef as _DBRef
+from typing import Tuple as _Tuple, List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable
+from plugins import auth as _auth, odm as _odm
 
-class Roles(_odm.field.UniqueStringList):
-    def _get_role_uid(self, value) -> str:
+
+def _resolve_user(f_name: str, allow_system: bool, allow_anonymous: bool, disallowed_users: _List[_auth.AbstractUser],
+                  value: _Union[_auth.AbstractUser, str, _DBRef]) -> _auth.AbstractUser:
+    """Helper
+    """
+    if isinstance(value, _auth.AbstractUser):
+        user = value
+    elif isinstance(value, str):
+        user = _auth.get_user(uid=value)
+    elif isinstance(value, _DBRef):
+        user = _auth.get_user(uid=value.id)
+    else:
+        raise TypeError("Field '{}': user object, str or DB ref expected, got {}".
+                        format(f_name, type(value)))
+
+    if user.is_anonymous and not allow_anonymous:
+        raise ValueError('Anonymous user is not allowed here')
+
+    if user.is_system and not allow_system:
+        raise ValueError('System user is not allowed here')
+
+    for u in disallowed_users:  # type: _auth.model.AbstractUser
+        if u.uid == user.uid:
+            raise ValueError("User '{}' is not allowed here".format(user.login))
+
+    return user
+
+
+class Roles(_odm.field.UniqueList):
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name, allowed_types=(_auth.model.AbstractRole,), **kwargs)
+
+    def _resolve_role(self, value) -> _auth.AbstractRole:
         """Helper
         """
         if isinstance(value, _auth.model.AbstractRole):
-            return value.uid
+            return value
         elif isinstance(value, str):
-            return _auth.get_role(uid=value).uid
+            return _auth.get_role(uid=value)
         elif isinstance(value, _DBRef):
-            return _auth.get_role(uid=str(value.id)).uid
+            return _auth.get_role(uid=str(value.id))
         else:
             raise TypeError("Field '{}': role object, str or DB ref expected, got {}".format(self.name, type(value)))
 
-    def _on_get(self, value: _List[str], **kwargs) -> _Tuple[_auth.model.AbstractRole, ...]:
-        return tuple([_auth.get_role(uid=role_uid) for role_uid in value])
-
-    def _on_set(self, value: _Union[list, tuple], **kwargs) -> _List[str]:
+    def _on_get_storable(self, value: _List[_auth.AbstractRole], **kwargs) -> _Iterable[str]:
         """Hook
         """
-        if value is None:
+        return [v.uid for v in value]
+
+    def _on_set(self, raw_value: _Union[list, tuple], **kwargs) -> _Iterable[_auth.AbstractRole]:
+        """Hook
+        """
+        if raw_value is None:
             return []
 
-        if not isinstance(value, (list, tuple)):
-            raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(value)))
+        if not isinstance(raw_value, (list, tuple)):
+            raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
-        return [self._get_role_uid(r) for r in value]
+        return [self._resolve_role(r) for r in raw_value]
 
-    def _on_add(self, current_value: list, raw_value_to_add, **kwargs):
-        return super()._on_add(current_value, self._get_role_uid(raw_value_to_add))
+    def _on_add(self, current_value: _List[_auth.AbstractRole], raw_value_to_add, **kwargs):
+        return super()._on_add(current_value, self._resolve_role(raw_value_to_add))
 
-    def _on_sub(self, current_value: list, raw_value_to_sub, **kwargs):
-        return super()._on_sub(current_value, self._get_role_uid(raw_value_to_sub))
+    def _on_sub(self, current_value: _List[_auth.AbstractRole], raw_value_to_sub, **kwargs):
+        return super()._on_sub(current_value, self._resolve_role(raw_value_to_sub))
 
     def sanitize_finder_arg(self, arg):
         """Hook. Used for sanitizing Finder's query argument.
@@ -64,12 +96,7 @@ class User(_odm.field.Abstract):
     """
 
     def __init__(self, name: str, **kwargs):
-        """Init.
-
-        :param default:
-        :param nonempty: bool
-        :param allow_anonymous: bool
-        :param allow_system: bool
+        """Init
         """
         self._allow_anonymous = kwargs.get('allow_anonymous', False)
         self._allow_system = kwargs.get('allow_system', False)
@@ -77,74 +104,18 @@ class User(_odm.field.Abstract):
 
         super().__init__(name, **kwargs)
 
-    def _resolve_user_uid(self, value) -> str:
-        if isinstance(value, str):
-            value = _DBRef('users', value).id  # Check reference ID validness
-        elif isinstance(value, _auth.model.AbstractUser):
-            value = value.uid
-        else:
-            raise TypeError('String or user expected, got {}'.format(type(value)))
-
-        return value
-
-    def _resolve_user(self, value) -> _auth.model.AbstractUser:
-        if isinstance(value, _auth.model.AbstractUser):
-            return value
-        elif isinstance(value, str):
-            return _auth.get_user(uid=value)
-        elif isinstance(value, _DBRef):
-            return _auth.get_user(uid=value.id)
-        else:
-            raise TypeError("Field '{}': user object, str or DB ref expected, got {}.".
-                            format(self._name, type(value)))
-
-    def _check_user(self, user: _auth.model.AbstractUser):
-        if user.is_anonymous:
-            if not self._allow_anonymous:
-                raise ValueError('Anonymous user is not allowed here')
-            return 'ANONYMOUS'
-        elif user.is_system:
-            if not self._allow_system:
-                raise ValueError('System user is not allowed here')
-            return 'SYSTEM'
-
-        if self._disallowed_users:
-            for user in self._disallowed_users:  # type: _auth.model.AbstractUser
-                if user.uid == user.uid:
-                    raise ValueError("User '{}' is not allowed here".format(user.login))
-
-        return user
-
-    def _on_set(self, raw_value, **kwargs) -> _Optional[str]:
+    def _on_set(self, raw_value, **kwargs) -> _Optional[_auth.AbstractUser]:
         """Hook
-
-        Internally this field stores only user's UID as string.
         """
         if raw_value is None:
-            return raw_value
+            return None
 
-        # To avoid infinite recursion on ODM entity creation
-        if kwargs.get('init') or kwargs.get('from_db'):
-            return self._resolve_user_uid(raw_value)
+        return _resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value)
 
-        raw_value = self._check_user(self._resolve_user(raw_value))
-
-        if raw_value.is_anonymous:
-            return 'ANONYMOUS'
-        elif raw_value.is_system:
-            return 'SYSTEM'
-
-        return raw_value.uid
-
-    def _on_get(self, value: str, **kwargs) -> _Optional[_auth.model.AbstractUser]:
+    def _on_get_storable(self, value: _Optional[_auth.AbstractUser], **kwargs) -> _Optional[str]:
         """Hook
         """
-        if value == 'ANONYMOUS':
-            return _auth.get_anonymous_user()
-        elif value == 'SYSTEM':
-            return _auth.get_system_user()
-        else:
-            return _auth.get_user(uid=value) if value else None
+        return value.uid if value else None
 
     def sanitize_finder_arg(self, arg):
         """Hook. Used for sanitizing Finder's query argument.
@@ -168,18 +139,21 @@ class User(_odm.field.Abstract):
             return arg
 
 
-class Users(User):
-    """Field to store list of references to users
+class Users(_odm.field.UniqueList):
+    """Field to store list of users
     """
 
     def __init__(self, name: str, **kwargs):
         """Init.
         """
         kwargs.setdefault('default', [])
+        self._allow_anonymous = kwargs.get('allow_anonymous', False)
+        self._allow_system = kwargs.get('allow_system', False)
+        self._disallowed_users = kwargs.get('disallowed_users', ())
 
-        super().__init__(name, **kwargs)
+        super().__init__(name, allowed_types=(_auth.model.AbstractUser,), **kwargs)
 
-    def _on_set(self, raw_value: _Union[list, tuple], **kwargs) -> _List[str]:
+    def _on_set(self, raw_value: _Union[list, tuple], **kwargs) -> _Iterable[_auth.AbstractUser]:
         """Hook
         """
         if raw_value is None:
@@ -188,30 +162,22 @@ class Users(User):
         if not isinstance(raw_value, (list, tuple)):
             raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
-        # To avoid infinite recursion on ODM entity creation
-        if kwargs.get('init') or kwargs.get('from_db'):
-            return [self._resolve_user_uid(v) for v in raw_value]
+        return [_resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users, v)
+                for v in raw_value]
 
-        return [self._check_user(self._resolve_user(v)).uid for v in raw_value]
-
-    def _on_get(self, value: list, **kwargs) -> _Tuple[_auth.model.AbstractUser, ...]:
+    def _on_get_storable(self, value: _List[_auth.AbstractUser], **kwargs) -> _Iterable[str]:
         """Hook
         """
-        r = []
-        for uid in value:
-            try:
-                r.append(_auth.get_user(uid=uid))
-            except _auth.error.UserNotFound:
-                pass
+        return [v.uid for v in value]
 
-        return tuple(r)
+    def _on_add(self, current_value: _List[_auth.AbstractUser], raw_value_to_add, **kwargs):
+        u = _resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users,
+                          raw_value_to_add)
 
-    def _on_add(self, current_value: list, raw_value_to_add, **kwargs):
-        current_value.append(self._check_user(self._resolve_user(raw_value_to_add)).uid)
+        return super()._on_add(current_value, u)
 
-        return current_value
+    def _on_sub(self, current_value: _List[_auth.AbstractUser], raw_value_to_sub, **kwargs):
+        u = _resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users,
+                          raw_value_to_sub)
 
-    def _on_sub(self, current_value: list, raw_value_to_sub, **kwargs):
-        raw_value_to_sub = self._check_user(self._resolve_user(raw_value_to_sub)).uid
-
-        return [uid for uid in current_value if uid != raw_value_to_sub]
+        return super()._on_sub(current_value, u)

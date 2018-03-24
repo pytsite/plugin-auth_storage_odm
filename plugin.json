@@ -1,6 +1,6 @@
 {
   "name": "auth_storage_odm",
-  "version": "1.7",
+  "version": "1.7.1",
   "description": {
     "en": "Auth ODM Storage Driver",
     "ru": "Auth ODM Storage Driver",
@@ -13,7 +13,6 @@
     "url": "https://shepetko.com"
   },
   "requires": {
-    "packages": [],
     "plugins": [
       "auth>=1.11",
       "odm>=1.4",
