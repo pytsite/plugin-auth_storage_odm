@@ -5,7 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 from bson import DBRef as _DBRef
-from typing import Tuple as _Tuple, List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable
+from typing import List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable
 from plugins import auth as _auth, odm as _odm
 
 

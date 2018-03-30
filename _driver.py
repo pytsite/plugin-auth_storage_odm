@@ -1,13 +1,13 @@
 """PytSite Authentication ODM Storage Driver
 """
+__author__ = 'Alexander Shepetko'
+__email__ = 'a@shepetko.com'
+__license__ = 'MIT'
+
 from typing import Iterable as _Iterable
 from pytsite import validation as _validation, logger as _logger
 from plugins import auth as _auth, odm as _odm
 from . import _model
-
-__author__ = 'Alexander Shepetko'
-__email__ = 'a@shepetko.com'
-__license__ = 'MIT'
 
 
 class Storage(_auth.driver.Storage):

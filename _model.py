@@ -16,14 +16,14 @@ class ODMRole(_odm.model.Entity):
         return 'security'
 
     def _setup_fields(self):
-        """Hook.
+        """Hook
         """
         self.define_field(_odm.field.String('name'))
         self.define_field(_odm.field.String('description'))
         self.define_field(_odm.field.UniqueStringList('permissions'))
 
     def _setup_indexes(self):
-        """Hook.
+        """Hook
         """
         self.define_index([('name', _odm.I_ASC)], unique=True)
 
@@ -38,7 +38,7 @@ class ODMRole(_odm.model.Entity):
         _events.fire('auth@role.save', role=role)
 
     def _pre_delete(self, **kwargs):
-        """Hook.
+        """Hook
         """
         # Check if the role is used by users
         for user in _auth.get_users():
@@ -104,17 +104,17 @@ class Role(_auth.model.AbstractRole):
 
 
 class ODMUser(_odm.model.Entity):
-    """ODM model to store information about user.
+    """ODM model to store information about user
     """
 
     @classmethod
     def odm_auth_permissions_group(cls) -> str:
-        """Hook.
+        """Hook
         """
         return 'security'
 
     def _setup_fields(self):
-        """Hook.
+        """Hook
         """
         # Fields
         self.define_field(_odm.field.String('login', required=True))
@@ -240,7 +240,7 @@ class ODMUser(_odm.model.Entity):
         _events.fire('auth@user.delete', user=_auth.get_user(uid=str(self.id)))
 
     def _after_delete(self, **kwargs):
-        """Hook.
+        """Hook
         """
         pic = self.f_get('picture')
         if pic:
