@@ -41,7 +41,7 @@ class ODMRole(_odm.model.Entity):
         """Hook
         """
         # Check if the role is used by users
-        for user in _auth.get_users():
+        for user in _auth.find_users():
             if user.has_role(self.f_get('name')):
                 raise _errors.ForbidDeletion(self.t('role_used_by_user', {'user': user.login}))
 
@@ -120,6 +120,7 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.String('login', required=True))
         self.define_field(_odm.field.Email('email', required=True))
         self.define_field(_odm.field.String('password', required=True))
+        self.define_field(_odm.field.String('confirmation_hash'))
         self.define_field(_odm.field.String('nickname', required=True))
         self.define_field(_odm.field.Bool('profile_is_public', default=False))
         self.define_field(_odm.field.String('first_name'))

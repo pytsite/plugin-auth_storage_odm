@@ -4,9 +4,9 @@ __author__ = 'Alexander Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
-from typing import Iterable as _Iterable
+from typing import Iterator as _Iterator, List as _List, Tuple as _Tuple
 from pytsite import validation as _validation, logger as _logger
-from plugins import auth as _auth, odm as _odm
+from plugins import auth as _auth, odm as _odm, query as _query
 from . import _model
 
 
@@ -40,25 +40,12 @@ class Storage(_auth.driver.Storage):
 
         return _model.Role(role_entity)
 
-    def get_roles(self, flt: dict = None, sort_field: str = None, sort_order: int = 1, limit: int = None,
-                  skip: int = 0) -> _Iterable[_auth.model.AbstractRole]:
-        f = _odm.find('role')
-
-        if sort_field:
-            f.sort([(sort_field, sort_order)])
-
-        if skip:
-            f.skip(skip)
-
-        if flt:
-            for k, v in flt.items():
-                if not f.mock.has_field(k):
-                    RuntimeError("Role doesn't have field '{}'.".format(k))
-
-                f.eq(k, v)
-
+    def find_roles(self, query: _query.Query = None, sort: _List[_Tuple[str, int]] = None, limit: int = None,
+                   skip: int = 0) -> _Iterator[_auth.model.AbstractRole]:
+        """Find roles
+        """
         # Return generator
-        return (_model.Role(role_entity) for role_entity in f.get(limit))
+        return (_model.Role(role_entity) for role_entity in _odm.find('role', query=query).skip(skip).get(limit))
 
     def create_user(self, login: str, password: str = None) -> _auth.model.AbstractUser:
         user_entity = _odm.dispense('user')  # type: _model.ODMUser
@@ -99,56 +86,28 @@ class Storage(_auth.driver.Storage):
 
         return _model.User(user_entity)
 
-    def get_users(self, flt: dict = None, sort_field: str = None, sort_order: int = 1, limit: int = None,
-                  skip: int = 0) -> _Iterable[_auth.model.AbstractUser]:
-        f = _odm.find('user')
+    def find_users(self, query: _query.Query = None, sort: _List[_Tuple[str, int]] = None, limit: int = None,
+                   skip: int = 0) -> _Iterator[_auth.model.AbstractUser]:
+        """Find users
+        """
+        f = _odm.find('user', query=query).skip(skip)
 
-        if sort_field:
-            if sort_field in ('created', 'modified'):
-                sort_field = '_' + sort_field
-            elif sort_field == 'full_name':
-                sort_field = 'first_name'
-            elif sort_field == 'is_online':
-                sort_field = 'last_activity'
-            f.sort([(sort_field, sort_order)])
+        if sort:
+            for sort_field, sort_order in sort:
+                if sort_field in ('created', 'modified'):
+                    sort_field = '_' + sort_field
+                elif sort_field == 'full_name':
+                    sort_field = 'first_name'
+                elif sort_field == 'is_online':
+                    sort_field = 'last_activity'
 
-        if skip:
-            f.skip(skip)
-
-        if flt:
-            for k, v in flt.items():
-                if not f.mock.has_field(k):
-                    RuntimeError("User doesn't have field '{}'".format(k))
-
-                if isinstance(v, (tuple, list)):
-                    f.inc(k, v)
-                else:
-                    f.eq(k, v)
+                f.sort([(sort_field, sort_order)])
 
         # Return generator
         return (_model.User(user_entity) for user_entity in f.get(limit))
 
-    def count_users(self, flt: dict = None) -> int:
-        f = _odm.find('user')
-        if flt:
-            for k, v in flt.items():
-                if not f.mock.has_field(k):
-                    RuntimeError("User doesn't have field '{}'.".format(k))
+    def count_users(self, query: _query.Query = None) -> int:
+        return _odm.find('user', query=query).count()
 
-                if isinstance(v, (tuple, list)):
-                    f.inc(k, v)
-                else:
-                    f.eq(k, v)
-
-        return f.count()
-
-    def count_roles(self, flt: dict = None) -> int:
-        f = _odm.find('role')
-        if flt:
-            for k, v in flt.items():
-                if not f.mock.has_field(k):
-                    RuntimeError("Role doesn't have field '{}'.".format(k))
-
-                f.eq(k, v)
-
-        return f.count()
+    def count_roles(self, query: _query.Query = None) -> int:
+        return _odm.find('role', query=query).count()

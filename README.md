@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 2.0 (2017-04-06)
+
+Support of `auth-2.0` and `odm-2.0`.
+
+
 ### 1.7.2 (2017-03-24)
 
 `plugin.json` fixed.
