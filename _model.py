@@ -5,7 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import hashlib as _hashlib
-from pytsite import util as _util, events as _events, errors as _errors
+from pytsite import util as _util
 from plugins import auth as _auth, file_storage_odm as _file_storage_odm, file as _file, odm as _odm
 from . import _field
 
@@ -26,6 +26,7 @@ class ODMRole(_odm.model.Entity):
         """Hook
         """
         self.define_index([('name', _odm.I_ASC)], unique=True)
+
 
 class Role(_auth.model.AbstractRole):
     def __init__(self, odm_entity: ODMRole):
@@ -200,34 +201,12 @@ class ODMUser(_odm.model.Entity):
             m.update(self.f_get('login').encode('UTF-8'))
             self.f_set('nickname', m.hexdigest())
 
-    def _after_save(self, first_save: bool = False, **kwargs):
-        super()._after_save(first_save, **kwargs)
-
-        user = _auth.get_user(uid=str(self.id))
-
-        if first_save:
-            _events.fire('auth@user.create', user=user)
-
-        _events.fire('auth@user.save', user=user)
-
-    def _pre_delete(self, **kwargs):
-        super()._pre_delete(**kwargs)
-
-        if str(self.id) == _auth.get_current_user().uid:
-            raise _errors.ForbidDeletion(self.t('you_cannot_delete_yourself'))
-
-        _events.fire('auth@user.delete', user=_auth.get_user(uid=str(self.id)))
-
     def _after_delete(self, **kwargs):
         """Hook
         """
         pic = self.f_get('picture')
         if pic:
-            try:
-                pic.delete()
-            except _odm.error.EntityDeleted:
-                # Entity was deleted by another instance
-                pass
+            pic.delete()
 
 
 class User(_auth.model.AbstractUser):
