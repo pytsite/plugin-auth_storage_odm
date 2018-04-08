@@ -27,27 +27,6 @@ class ODMRole(_odm.model.Entity):
         """
         self.define_index([('name', _odm.I_ASC)], unique=True)
 
-    def _after_save(self, first_save: bool = False, **kwargs):
-        super()._after_save(first_save, **kwargs)
-
-        role = _auth.get_role(uid=str(self.id))
-
-        if first_save:
-            _events.fire('auth@role.create', role=role)
-
-        _events.fire('auth@role.save', role=role)
-
-    def _pre_delete(self, **kwargs):
-        """Hook
-        """
-        # Check if the role is used by users
-        for user in _auth.find_users():
-            if user.has_role(self.f_get('name')):
-                raise _errors.ForbidDeletion(self.t('role_used_by_user', {'user': user.login}))
-
-        _events.fire('auth@role.delete', role=_auth.get_role(uid=str(self.id)))
-
-
 class Role(_auth.model.AbstractRole):
     def __init__(self, odm_entity: ODMRole):
         if not isinstance(odm_entity, ODMRole):
@@ -85,22 +64,22 @@ class Role(_auth.model.AbstractRole):
         return self
 
     @property
+    def is_new(self) -> bool:
+        return self._entity.is_new
+
+    @property
     def is_modified(self) -> bool:
         return self._entity.is_modified
 
-    def save(self):
+    @property
+    def created(self) -> str:
+        return self.get_field('_created')
+
+    def do_save(self):
         self._entity.save()
 
-        return self
-
-    def delete(self):
-        try:
-            self._entity.delete()
-        except _odm.error.EntityDeleted:
-            # Entity was deleted by another instance
-            pass
-
-        return self
+    def do_delete(self):
+        self._entity.delete()
 
 
 class ODMUser(_odm.model.Entity):
@@ -232,7 +211,6 @@ class ODMUser(_odm.model.Entity):
         _events.fire('auth@user.save', user=user)
 
     def _pre_delete(self, **kwargs):
-
         super()._pre_delete(**kwargs)
 
         if str(self.id) == _auth.get_current_user().uid:
@@ -268,16 +246,16 @@ class User(_auth.model.AbstractUser):
         return str(self._entity.id)
 
     @property
+    def is_new(self) -> bool:
+        return self._entity.is_new
+
+    @property
     def is_modified(self) -> bool:
         return self._entity.is_modified
 
     @property
     def created(self) -> str:
         return self.get_field('_created')
-
-    @property
-    def is_new(self):
-        return self._entity.is_new
 
     def has_field(self, field_name: str) -> bool:
         return self._entity.has_field(field_name)
