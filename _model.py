@@ -255,7 +255,7 @@ class ODMUser(_odm.model.Entity):
 class User(_auth.model.AbstractUser):
     def __init__(self, odm_entity: ODMUser):
         if not isinstance(odm_entity, ODMUser):
-            raise TypeError('Instance of ODMUser expected, got {}.'.format(type(odm_entity)))
+            raise TypeError('Instance of {} expected, got {}'.format(ODMUser, type(odm_entity)))
 
         self._entity = odm_entity
 
@@ -274,6 +274,10 @@ class User(_auth.model.AbstractUser):
     @property
     def created(self) -> str:
         return self.get_field('_created')
+
+    @property
+    def is_new(self):
+        return self._entity.is_new
 
     def has_field(self, field_name: str) -> bool:
         return self._entity.has_field(field_name)
@@ -331,19 +335,11 @@ class User(_auth.model.AbstractUser):
     def is_blocks(self, user_to_check: _auth.model.AbstractUser) -> bool:
         return bool(_odm.find('blocked_user').eq('blocker', self).eq('blocked', user_to_check).count())
 
-    def save(self):
-        super().save()
-
+    def do_save(self):
         self._entity.save()
 
-        return self
-
-    def delete(self):
-        super().delete()
-
+    def do_delete(self):
         self._entity.delete()
-
-        return self
 
 
 class ODMFollower(_odm.model.Entity):
