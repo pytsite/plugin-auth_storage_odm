@@ -61,9 +61,6 @@ class Storage(_auth.driver.Storage):
         except _validation.error.RuleError:
             pass
 
-        if login not in (_auth.model.SYSTEM_USER_LOGIN, _auth.model.ANONYMOUS_USER_LOGIN):
-            user_entity.save()
-
         return _model.User(user_entity)
 
     def get_user(self, login: str = None, nickname: str = None, uid: str = None) -> _auth.model.AbstractUser:
