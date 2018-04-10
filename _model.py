@@ -257,6 +257,8 @@ class User(_auth.model.AbstractUser):
         return self._entity.f_get(field_name)
 
     def set_field(self, field_name: str, value):
+        super().set_field(field_name, value)
+
         self._entity.f_set(field_name, value)
 
         return self
