@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.1 (2017-04-25)
+
+Support of `odm-2.1`.
+
+
 ### 3.0 (2017-04-25)
 
 Support of `auth-3.0`.
