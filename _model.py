@@ -11,13 +11,10 @@ from . import _field
 
 
 class ODMRole(_odm.model.Entity):
-    @classmethod
-    def odm_auth_permissions_group(cls) -> str:
-        return 'security'
-
     def _setup_fields(self):
         """Hook
         """
+        self.define_field(_odm.field.String('uid'))
         self.define_field(_odm.field.String('name'))
         self.define_field(_odm.field.String('description'))
         self.define_field(_odm.field.UniqueStringList('permissions'))
@@ -25,7 +22,14 @@ class ODMRole(_odm.model.Entity):
     def _setup_indexes(self):
         """Hook
         """
+        self.define_index([('uid', _odm.I_ASC)], unique=True)
         self.define_index([('name', _odm.I_ASC)], unique=True)
+
+    def _pre_save(self, **kwargs):
+        super()._pre_save(**kwargs)
+
+        if self.is_new:
+            self.f_set('uid', str(self.id))
 
 
 class Role(_auth.model.AbstractRole):
@@ -38,10 +42,6 @@ class Role(_auth.model.AbstractRole):
     @property
     def odm_entity(self) -> ODMRole:
         return self._entity
-
-    @property
-    def uid(self) -> str:
-        return str(self._entity.id)
 
     def has_field(self, field_name: str) -> bool:
         return self._entity.has_field(field_name)
@@ -97,12 +97,13 @@ class ODMUser(_odm.model.Entity):
         """Hook
         """
         # Fields
+        self.define_field(_odm.field.String('uid', required=True))
         self.define_field(_odm.field.String('login', required=True))
         self.define_field(_odm.field.Email('email', required=True))
         self.define_field(_odm.field.String('password', required=True))
         self.define_field(_odm.field.String('confirmation_hash'))
         self.define_field(_odm.field.String('nickname', required=True))
-        self.define_field(_odm.field.Bool('profile_is_public', default=False))
+        self.define_field(_odm.field.Bool('is_public', default=False))
         self.define_field(_odm.field.String('first_name'))
         self.define_field(_odm.field.String('last_name'))
         self.define_field(_odm.field.String('description'))
@@ -128,6 +129,7 @@ class ODMUser(_odm.model.Entity):
     def _setup_indexes(self):
         """Hook.
         """
+        self.define_index([('uid', _odm.I_ASC)], unique=True)
         self.define_index([('login', _odm.I_ASC)], unique=True)
         self.define_index([('nickname', _odm.I_ASC)], unique=True)
         self.define_index([('last_sign_in', _odm.I_DESC)])
@@ -135,13 +137,15 @@ class ODMUser(_odm.model.Entity):
     def _on_f_get(self, field_name: str, value, **kwargs):
         if field_name == 'picture' and not self.get_field('picture').get_val():
             if not (self.is_new or self.is_deleted or self.is_being_deleted):
-                # Load user picture from Gravatar
-                img_url = 'https://www.gravatar.com/avatar/' + _util.md5_hex_digest(self.f_get('email')) + '?s=512'
-                img = _file.create(img_url)
-                _auth.switch_user_to_system()
-                self.f_set('picture', img).save()
-                _auth.restore_user()
-                value = img
+                try:
+                    # Load user picture from Gravatar
+                    img_url = 'https://www.gravatar.com/avatar/' + _util.md5_hex_digest(self.f_get('email')) + '?s=512'
+                    img = _file.create(img_url)
+                    _auth.switch_user_to_system()
+                    self.f_set('picture', img).save()
+                    value = img
+                finally:
+                    _auth.restore_user()
 
         return value
 
@@ -193,6 +197,10 @@ class ODMUser(_odm.model.Entity):
         """
         super()._pre_save(**kwargs)
 
+        if self.is_new:
+            self.f_set('uid', str(self.id))
+
+        # Generate password
         if not self.f_get('password'):
             self.f_set('password', '')
 
@@ -219,10 +227,6 @@ class User(_auth.model.AbstractUser):
     @property
     def odm_entity(self) -> ODMUser:
         return self._entity
-
-    @property
-    def uid(self) -> str:
-        return str(self._entity.id)
 
     @property
     def is_new(self) -> bool:

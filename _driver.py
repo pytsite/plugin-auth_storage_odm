@@ -30,9 +30,9 @@ class Storage(_auth.driver.Storage):
         if name:
             f.eq('name', name)
         elif uid:
-            f.eq('_id', uid)
+            f.eq('uid', uid)
         else:
-            raise RuntimeError("Either role's name or UID should be specified.")
+            raise RuntimeError("Either role's name or UID must be specified")
 
         role_entity = f.first()  # type: _model.ODMRole
         if not role_entity:
@@ -64,7 +64,6 @@ class Storage(_auth.driver.Storage):
         return _model.User(user_entity)
 
     def get_user(self, login: str = None, nickname: str = None, uid: str = None) -> _auth.model.AbstractUser:
-
         # Don't cache finder results due to frequent user updates in database
         f = _odm.find('user').cache(0)
         if login is not None:
@@ -72,7 +71,7 @@ class Storage(_auth.driver.Storage):
         elif nickname is not None:
             f.eq('nickname', nickname)
         elif uid is not None:
-            f.eq('_id', uid)
+            f.eq('uid', uid)
         else:
             raise RuntimeError('User search criteria was not specified')
 
