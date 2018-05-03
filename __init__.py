@@ -38,8 +38,8 @@ def plugin_update(v_from: _semver.Version):
                 col.update_one({'_id': d['_id']}, {'$set': {'uid': str(d['_id'])}})
                 console.print_info('Document updated: {}:{}'.format(c, d['_id']))
 
-        odm.clear_finder_cache('role')
-        odm.clear_finder_cache('user')
+        odm.clear_cache('role')
+        odm.clear_cache('user')
 
         odm.reindex('role')
         odm.reindex('user')

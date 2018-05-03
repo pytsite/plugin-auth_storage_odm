@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.2 (2017-05-03)
+
+Support of `odm-3.0`.
+
+
 ### 3.1 (2017-04-25)
 
 Support of `odm-2.1`.
