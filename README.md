@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.3 (2017-06-16)
+
+Format of users and roles UIDs changed.
+
+
 ### 3.2 (2017-05-03)
 
 Support of `odm-3.0`.
