@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.3.1 (2017-07-22)
+
+Plugin update issue fixed.
+
+
 ### 3.3 (2017-06-16)
 
 Format of users and roles UIDs changed.
