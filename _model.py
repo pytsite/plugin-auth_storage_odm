@@ -24,6 +24,10 @@ class ODMRole(_odm.model.Entity):
         """
         self.define_index([('uid', _odm.I_ASC)], unique=True)
         self.define_index([('name', _odm.I_ASC)], unique=True)
+        self.define_index([
+            ('name', _odm.I_TEXT),
+            ('description', _odm.I_TEXT),
+        ], name='text_index')
 
     def _pre_save(self, **kwargs):
         super()._pre_save(**kwargs)
@@ -98,15 +102,15 @@ class ODMUser(_odm.model.Entity):
         """
         # Fields
         self.define_field(_odm.field.String('uid', required=True))
-        self.define_field(_odm.field.String('login', required=True))
-        self.define_field(_odm.field.Email('email', required=True))
+        self.define_field(_odm.field.String('login', required=True, max_length=_auth.LOGIN_MAX_LENGTH))
+        self.define_field(_odm.field.String('nickname', required=True, max_length=_auth.NICKNAME_MAX_LENGTH))
         self.define_field(_odm.field.String('password', required=True))
         self.define_field(_odm.field.String('confirmation_hash'))
-        self.define_field(_odm.field.String('nickname', required=True))
         self.define_field(_odm.field.Bool('is_public', default=False))
-        self.define_field(_odm.field.String('first_name'))
-        self.define_field(_odm.field.String('last_name'))
-        self.define_field(_odm.field.String('description'))
+        self.define_field(_odm.field.String('first_name', max_length=_auth.FIRST_NAME_MAX_LENGTH))
+        self.define_field(_odm.field.String('middle_name', max_length=_auth.MIDDLE_NAME_MAX_LENGTH))
+        self.define_field(_odm.field.String('last_name', max_length=_auth.LAST_NAME_MAX_LENGTH))
+        self.define_field(_odm.field.String('description', max_length=_auth.DESCRIPTION_MAX_LENGTH))
         self.define_field(_odm.field.DateTime('birth_date'))
         self.define_field(_odm.field.String('timezone'))
         self.define_field(_odm.field.DateTime('last_sign_in'))
@@ -114,17 +118,23 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.Integer('sign_in_count'))
         self.define_field(_odm.field.String('status', default='active'))
         self.define_field(_field.Roles('roles'))
-        self.define_field(_odm.field.String('gender'))
-        self.define_field(_odm.field.String('phone'))
+        self.define_field(_odm.field.Enum('gender', values=('m', 'f')))
+        self.define_field(_odm.field.String('phone', max_length=_auth.PHONE_MAX_LENGTH))
         self.define_field(_odm.field.Dict('options'))
         self.define_field(_file_storage_odm.field.Image('picture'))
+        self.define_field(_file_storage_odm.field.Image('cover_picture'))
         self.define_field(_odm.field.StringList('urls', unique=True))
         self.define_field(_odm.field.Integer('follows_count'))
         self.define_field(_odm.field.Integer('followers_count'))
         self.define_field(_odm.field.Integer('blocked_users_count'))
         self.define_field(_odm.field.String('last_ip'))
-        self.define_field(_odm.field.String('country'))
-        self.define_field(_odm.field.String('city'))
+        self.define_field(_odm.field.String('country', max_length=_auth.COUNTRY_MAX_LENGTH))
+        self.define_field(_odm.field.String('region', max_length=_auth.REGION_MAX_LENGTH))
+        self.define_field(_odm.field.String('city', max_length=_auth.CITY_MAX_LENGTH))
+        self.define_field(_odm.field.String('street', max_length=_auth.STREET_MAX_LENGTH))
+        self.define_field(_odm.field.String('house_number', max_length=_auth.HOUSE_NUMBER_MAX_LENGTH))
+        self.define_field(_odm.field.String('apt_number', max_length=_auth.APT_NUMBER_MAX_LENGTH))
+        self.define_field(_odm.field.String('postal_code', max_length=10))
 
     def _setup_indexes(self):
         """Hook.
@@ -133,13 +143,24 @@ class ODMUser(_odm.model.Entity):
         self.define_index([('login', _odm.I_ASC)], unique=True)
         self.define_index([('nickname', _odm.I_ASC)], unique=True)
         self.define_index([('last_sign_in', _odm.I_DESC)])
+        self.define_index([
+            ('login', _odm.I_TEXT),
+            ('nickname', _odm.I_TEXT),
+            ('first_name', _odm.I_TEXT),
+            ('last_name', _odm.I_TEXT),
+            ('city', _odm.I_TEXT),
+            ('country', _odm.I_TEXT),
+            ('region', _odm.I_TEXT),
+            ('street', _odm.I_TEXT),
+            ('phone', _odm.I_TEXT),
+        ], name='text_index')
 
     def _on_f_get(self, field_name: str, value, **kwargs):
         if field_name == 'picture' and not self.get_field('picture').get_val():
             if not (self.is_new or self.is_deleted or self.is_being_deleted):
                 try:
                     # Load user picture from Gravatar
-                    img_url = 'https://www.gravatar.com/avatar/' + _util.md5_hex_digest(self.f_get('email')) + '?s=512'
+                    img_url = 'https://www.gravatar.com/avatar/' + _util.md5_hex_digest(self.f_get('login')) + '?s=512'
                     img = _file.create(img_url)
                     _auth.switch_user_to_system()
                     self.f_set('picture', img).save()
@@ -212,9 +233,10 @@ class ODMUser(_odm.model.Entity):
     def _after_delete(self, **kwargs):
         """Hook
         """
-        pic = self.f_get('picture')
-        if pic:
-            pic.delete()
+        for f_name in ('picture', 'cover_picture'):
+            pic = self.f_get(f_name)
+            if pic:
+                pic.delete()
 
 
 class User(_auth.model.AbstractUser):

@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.4 (2017-07-29)
+
+Support of `auth-3.5`.
+
+
 ### 3.3.1 (2017-07-22)
 
 Plugin update issue fixed.

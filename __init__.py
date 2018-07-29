@@ -77,3 +77,9 @@ def plugin_update(v_from: _semver.Version):
                         console.print_info('Document updated: {}:{}'.format(m, d['_id']))
 
             odm.clear_cache(m)
+
+    if v_from <= '3.4':
+        from plugins import odm
+
+        odm.reindex('role')
+        odm.reindex('user')

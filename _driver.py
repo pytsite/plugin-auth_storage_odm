@@ -54,13 +54,6 @@ class Storage(_auth.driver.Storage):
             'password': password,
         })
 
-        # If login is an email address, use it
-        try:
-            _validation.rule.Email(login).validate()
-            user_entity.f_set('email', login)
-        except _validation.error.RuleError:
-            pass
-
         return _model.User(user_entity)
 
     def get_user(self, login: str = None, nickname: str = None, uid: str = None) -> _auth.model.AbstractUser:
