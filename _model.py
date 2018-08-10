@@ -1,6 +1,6 @@
 """PytSite Authorization ODM Storage Models
 """
-__author__ = 'Alexander Shepetko'
+__author__ = 'Oleksandr Shepetko'
 __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
@@ -110,7 +110,8 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.String('first_name', max_length=_auth.FIRST_NAME_MAX_LENGTH))
         self.define_field(_odm.field.String('middle_name', max_length=_auth.MIDDLE_NAME_MAX_LENGTH))
         self.define_field(_odm.field.String('last_name', max_length=_auth.LAST_NAME_MAX_LENGTH))
-        self.define_field(_odm.field.String('description', max_length=_auth.DESCRIPTION_MAX_LENGTH))
+        self.define_field(_odm.field.String('position', max_length=_auth.USER_POSITION_MAX_LENGTH))
+        self.define_field(_odm.field.String('description', max_length=_auth.USER_DESCRIPTION_MAX_LENGTH))
         self.define_field(_odm.field.DateTime('birth_date'))
         self.define_field(_odm.field.String('timezone'))
         self.define_field(_odm.field.DateTime('last_sign_in'))
@@ -148,6 +149,7 @@ class ODMUser(_odm.model.Entity):
             ('nickname', _odm.I_TEXT),
             ('first_name', _odm.I_TEXT),
             ('last_name', _odm.I_TEXT),
+            ('position', _odm.I_TEXT),
             ('city', _odm.I_TEXT),
             ('country', _odm.I_TEXT),
             ('region', _odm.I_TEXT),

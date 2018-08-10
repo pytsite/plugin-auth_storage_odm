@@ -1,6 +1,6 @@
 {
   "name": "auth_storage_odm",
-  "version": "3.4",
+  "version": "3.5",
   "description": {
     "en": "Auth ODM Storage Driver",
     "ru": "Auth ODM Storage Driver",
@@ -8,13 +8,13 @@
   },
   "url": "https://github.com/pytsite/plugin-auth_storage_odm",
   "author": {
-    "name": "Alexander Shepetko",
+    "name": "Oleksandr Shepetko",
     "email": "a@shepetko.com",
     "url": "https://shepetko.com"
   },
   "requires": {
     "plugins": [
-      "auth>=3.5",
+      "auth>=3.6",
       "odm>=3.5",
       "file_storage_odm"
     ]

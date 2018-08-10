@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.5 (2017-08-10)
+
+Support of `auth-3.6`.
+
+
 ### 3.4 (2017-07-29)
 
 Support of `auth-3.5`.
