@@ -107,6 +107,7 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.String('password', required=True))
         self.define_field(_odm.field.String('confirmation_hash'))
         self.define_field(_odm.field.Bool('is_public', default=False))
+        self.define_field(_odm.field.Virtual('is_confirmed'))
         self.define_field(_odm.field.String('first_name', max_length=_auth.FIRST_NAME_MAX_LENGTH))
         self.define_field(_odm.field.String('middle_name', max_length=_auth.MIDDLE_NAME_MAX_LENGTH))
         self.define_field(_odm.field.String('last_name', max_length=_auth.LAST_NAME_MAX_LENGTH))
@@ -158,8 +159,9 @@ class ODMUser(_odm.model.Entity):
         ], name='text_index')
 
     def _on_f_get(self, field_name: str, value, **kwargs):
-        if field_name == 'picture' and not self.get_field('picture').get_val():
-            if not (self.is_new or self.is_deleted or self.is_being_deleted):
+        if field_name == 'picture':
+            if not self.get_field('picture').get_val() and \
+                    not (self.is_new or self.is_deleted or self.is_being_deleted):
                 try:
                     # Load user picture from Gravatar
                     img_url = 'https://www.gravatar.com/avatar/' + _util.md5_hex_digest(self.f_get('login')) + '?s=512'
@@ -169,6 +171,9 @@ class ODMUser(_odm.model.Entity):
                     value = img
                 finally:
                     _auth.restore_user()
+
+        elif field_name == 'is_confirmed':
+            value = not self.f_get('confirmation_hash')
 
         return value
 
@@ -192,6 +197,9 @@ class ODMUser(_odm.model.Entity):
 
         elif field_name == 'nickname':
             value = self._sanitize_nickname(value)
+
+        elif field_name == 'is_confirmed':
+            self.f_set('confirmation_hash', _util.random_str(64) if not value else None)
 
         return super()._on_f_set(field_name, value, **kwargs)
 

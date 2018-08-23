@@ -1,6 +1,6 @@
 {
   "name": "auth_storage_odm",
-  "version": "3.5",
+  "version": "3.6",
   "description": {
     "en": "Auth ODM Storage Driver",
     "ru": "Auth ODM Storage Driver",
@@ -14,7 +14,7 @@
   },
   "requires": {
     "plugins": [
-      "auth>=3.6",
+      "auth>=3.8",
       "odm>=3.5",
       "file_storage_odm"
     ]
