@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.6.1 (2017-08-28)
+
+Ukrainian nicknames transliteration fixed.
+
+
 ### 3.6 (2017-08-23)
 
 Support of `auth-3.8`.

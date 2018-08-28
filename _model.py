@@ -5,7 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 import hashlib as _hashlib
-from pytsite import util as _util
+from pytsite import util as _util, lang as _lang
 from plugins import auth as _auth, file_storage_odm as _file_storage_odm, file as _file, odm as _odm
 from . import _field
 
@@ -207,7 +207,7 @@ class ODMUser(_odm.model.Entity):
         """Generate unique nickname.
         """
         cnt = 0
-        s = _util.transform_str_2(s[:32])
+        s = _util.transform_str_2(s[:32], _lang.get_current())
         nickname = s
         while True:
             try:
