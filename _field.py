@@ -9,7 +9,7 @@ from typing import List as _List, Optional as _Optional, Union as _Union, Iterab
 from plugins import auth as _auth, odm as _odm
 
 
-def _resolve_user(f_name: str, allow_system: bool, allow_anonymous: bool, disallowed_users: _List[_auth.AbstractUser],
+def _resolve_user(allow_system: bool, allow_anonymous: bool, disallowed_users: _List[_auth.AbstractUser],
                   value: _Union[_auth.AbstractUser, str, _DBRef]) -> _auth.AbstractUser:
     """Helper
     """
@@ -20,8 +20,7 @@ def _resolve_user(f_name: str, allow_system: bool, allow_anonymous: bool, disall
     elif isinstance(value, _DBRef):
         user = _auth.get_user(uid=value.id)
     else:
-        raise TypeError("Field '{}': user object, str or DB ref expected, got {}".
-                        format(f_name, type(value)))
+        raise TypeError("User object, str or DB ref expected, got {}".format(type(value)))
 
     if user.is_anonymous and not allow_anonymous:
         raise ValueError('Anonymous user is not allowed here')
@@ -110,7 +109,7 @@ class User(_odm.field.Abstract):
         if raw_value is None:
             return None
 
-        return _resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value)
+        return _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value)
 
     def _on_get_storable(self, value: _Optional[_auth.AbstractUser], **kwargs) -> _Optional[str]:
         """Hook
@@ -162,8 +161,7 @@ class Users(_odm.field.UniqueList):
         if not isinstance(raw_value, (list, tuple)):
             raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
-        return [_resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users, v)
-                for v in raw_value]
+        return [_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v) for v in raw_value]
 
     def _on_get_storable(self, value: _List[_auth.AbstractUser], **kwargs) -> _Iterable[str]:
         """Hook
@@ -171,13 +169,18 @@ class Users(_odm.field.UniqueList):
         return [v.uid for v in value]
 
     def _on_add(self, current_value: _List[_auth.AbstractUser], raw_value_to_add, **kwargs):
-        u = _resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users,
-                          raw_value_to_add)
+        u = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value_to_add)
 
         return super()._on_add(current_value, u)
 
     def _on_sub(self, current_value: _List[_auth.AbstractUser], raw_value_to_sub, **kwargs):
-        u = _resolve_user(self._name, self._allow_system, self._allow_anonymous, self._disallowed_users,
-                          raw_value_to_sub)
+        u = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value_to_sub)
 
         return super()._on_sub(current_value, u)
+
+    def sanitize_finder_arg(self, arg):
+        if isinstance(arg, (list, tuple)):
+            return [_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v).uid
+                    for v in arg]
+        else:
+            return _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, arg).uid

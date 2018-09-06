@@ -4,92 +4,97 @@
 ## Changelog
 
 
-### 3.6.1 (2017-08-28)
+### 3.6.2 (2018-09-06)
+
+Fixed missing `field.Users.sanitize_finder_arg()` method.
+
+
+### 3.6.1 (2018-08-28)
 
 Ukrainian nicknames transliteration fixed.
 
 
-### 3.6 (2017-08-23)
+### 3.6 (2018-08-23)
 
 Support of `auth-3.8`.
 
 
-### 3.5 (2017-08-10)
+### 3.5 (2018-08-10)
 
 Support of `auth-3.6`.
 
 
-### 3.4 (2017-07-29)
+### 3.4 (2018-07-29)
 
 Support of `auth-3.5`.
 
 
-### 3.3.1 (2017-07-22)
+### 3.3.1 (2018-07-22)
 
 Plugin update issue fixed.
 
 
-### 3.3 (2017-06-16)
+### 3.3 (2018-06-16)
 
 Format of users and roles UIDs changed.
 
 
-### 3.2 (2017-05-03)
+### 3.2 (2018-05-03)
 
 Support of `odm-3.0`.
 
 
-### 3.1 (2017-04-25)
+### 3.1 (2018-04-25)
 
 Support of `odm-2.1`.
 
 
-### 3.0 (2017-04-25)
+### 3.0 (2018-04-25)
 
 Support of `auth-3.0`.
 
 
-### 2.3.1 (2017-04-10)
+### 2.3.1 (2018-04-10)
 
 Support of `auth-2.6.2`.
 
 
-### 2.3 (2017-04-09)
+### 2.3 (2018-04-09)
 
 Support of `auth-2.6`.
 
 
-### 2.2.1 (2017-04-08)
+### 2.2.1 (2018-04-08)
 
 Cleanup.
 
 
-### 2.2 (2017-04-08)
+### 2.2 (2018-04-08)
 
 Support of `auth-2.3`.
 
 
-### 2.1 (2017-04-08)
+### 2.1 (2018-04-08)
 
 Support of `auth-2.2`.
 
 
-### 2.0 (2017-04-06)
+### 2.0 (2018-04-06)
 
 Support of `auth-2.0` and `odm-2.0`.
 
 
-### 1.7.2 (2017-03-24)
+### 1.7.2 (2018-03-24)
 
 `plugin.json` fixed.
 
 
-### 1.7.1 (2017-03-24)
+### 1.7.1 (2018-03-24)
 
 Values hanling issues in `field` fixed.
 
 
-### 1.7 (2017-03-24)
+### 1.7 (2018-03-24)
 
 - Support of `auth-1.11` added.
 - New API methods added: `on_odm_setup_fields_role()` and
@@ -97,17 +102,17 @@ Values hanling issues in `field` fixed.
 - Models classes moved directly to the public API.
 
 
-### 1.6.3 (2017-02-27)
+### 1.6.3 (2018-02-27)
 
 Fields bugfix.
 
 
-### 1.6.2 (2017-01-20)
+### 1.6.2 (2018-01-20)
 
 `plugin.json` fixed.
 
 
-### 1.6.1 (2017-01-18)
+### 1.6.1 (2018-01-18)
 
 `create_user`() refactored.
 
