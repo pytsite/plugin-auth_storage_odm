@@ -5,7 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 from typing import Iterator as _Iterator, List as _List, Tuple as _Tuple
-from pytsite import validation as _validation, logger as _logger
+from pytsite import logger as _logger
 from plugins import auth as _auth, odm as _odm, query as _query
 from . import _model
 

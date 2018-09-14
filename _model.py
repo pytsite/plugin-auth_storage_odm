@@ -33,7 +33,7 @@ class ODMRole(_odm.model.Entity):
         super()._pre_save(**kwargs)
 
         if self.is_new:
-            self.f_set('uid', self.manual_ref)
+            self.f_set('uid', self.ref)
 
 
 class Role(_auth.model.AbstractRole):
@@ -229,7 +229,7 @@ class ODMUser(_odm.model.Entity):
         super()._pre_save(**kwargs)
 
         if self.is_new:
-            self.f_set('uid', self.manual_ref)
+            self.f_set('uid', self.ref)
 
         # Generate password
         if not self.f_get('password'):

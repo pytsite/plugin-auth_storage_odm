@@ -1,6 +1,6 @@
 {
   "name": "auth_storage_odm",
-  "version": "3.6.2",
+  "version": "3.7",
   "description": {
     "en": "Auth ODM Storage Driver",
     "ru": "Auth ODM Storage Driver",
@@ -16,7 +16,7 @@
     "pytsite": ">=7.32",
     "plugins": [
       "auth>=3.8",
-      "odm>=3.5",
+      "odm>=4.0",
       "file_storage_odm"
     ]
   }

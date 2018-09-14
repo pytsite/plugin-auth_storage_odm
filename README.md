@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.7 (2018-09-14)
+
+Support of `odm-4.0`.
+
+
 ### 3.6.2 (2018-09-06)
 
 Fixed missing `field.Users.sanitize_finder_arg()` method.
