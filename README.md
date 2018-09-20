@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 3.7.1 (2018-09-20)
+
+Text index creation issue fixed.
+
+
 ### 3.7 (2018-09-14)
 
 Support of `odm-4.0`.

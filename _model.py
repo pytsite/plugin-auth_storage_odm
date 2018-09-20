@@ -106,7 +106,7 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.String('nickname', required=True, max_length=_auth.NICKNAME_MAX_LENGTH))
         self.define_field(_odm.field.String('password', required=True))
         self.define_field(_odm.field.String('confirmation_hash'))
-        self.define_field(_odm.field.Bool('is_public', default=False))
+        self.define_field(_odm.field.Bool('is_public'))
         self.define_field(_odm.field.Virtual('is_confirmed'))
         self.define_field(_odm.field.String('first_name', max_length=_auth.FIRST_NAME_MAX_LENGTH))
         self.define_field(_odm.field.String('middle_name', max_length=_auth.MIDDLE_NAME_MAX_LENGTH))
@@ -145,18 +145,14 @@ class ODMUser(_odm.model.Entity):
         self.define_index([('login', _odm.I_ASC)], unique=True)
         self.define_index([('nickname', _odm.I_ASC)], unique=True)
         self.define_index([('last_sign_in', _odm.I_DESC)])
-        self.define_index([
-            ('login', _odm.I_TEXT),
-            ('nickname', _odm.I_TEXT),
-            ('first_name', _odm.I_TEXT),
-            ('last_name', _odm.I_TEXT),
-            ('position', _odm.I_TEXT),
-            ('city', _odm.I_TEXT),
-            ('country', _odm.I_TEXT),
-            ('region', _odm.I_TEXT),
-            ('street', _odm.I_TEXT),
-            ('phone', _odm.I_TEXT),
-        ], name='text_index')
+
+        text_index_fields = ['login', 'nickname', 'first_name', 'last_name', 'position', 'city', 'country', 'region',
+                             'street', 'phone']
+        text_index = []
+        for f_name in text_index_fields:
+            if self.has_field(f_name) and isinstance(self.get_field(f_name), _odm.field.String):
+                text_index.append((f_name, _odm.I_TEXT))
+        self.define_index(text_index, name='text_index')
 
     def _on_f_get(self, field_name: str, value, **kwargs):
         if field_name == 'picture':
