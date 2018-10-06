@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.0 (2018-10-06)
+
+Support of `pytsite-8.x`.
+
+
 ### 3.7.1 (2018-09-20)
 
 Text index creation issue fixed.
