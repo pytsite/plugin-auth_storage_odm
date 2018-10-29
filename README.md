@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.1 (2018-10-29)
+
+New field `UsersDict`.
+
+
 ### 4.0 (2018-10-06)
 
 Support of `pytsite-8.x`.

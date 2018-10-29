@@ -5,7 +5,8 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 from bson import DBRef as _DBRef
-from typing import List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable
+from typing import Dict as _Dict, List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable
+from frozendict import frozendict as _frozendict
 from plugins import auth as _auth, odm as _odm
 
 
@@ -65,7 +66,7 @@ class Roles(_odm.field.UniqueList):
         if not isinstance(raw_value, (list, tuple)):
             raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
-        return [self._resolve_role(r) for r in raw_value]
+        return [self._resolve_role(r) for r in raw_value if r]
 
     def _on_add(self, current_value: _List[_auth.AbstractRole], raw_value_to_add, **kwargs):
         return super()._on_add(current_value, self._resolve_role(raw_value_to_add))
@@ -145,7 +146,6 @@ class Users(_odm.field.UniqueList):
     def __init__(self, name: str, **kwargs):
         """Init.
         """
-        kwargs.setdefault('default', [])
         self._allow_anonymous = kwargs.get('allow_anonymous', False)
         self._allow_system = kwargs.get('allow_system', False)
         self._disallowed_users = kwargs.get('disallowed_users', ())
@@ -161,7 +161,8 @@ class Users(_odm.field.UniqueList):
         if not isinstance(raw_value, (list, tuple)):
             raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
-        return [_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v) for v in raw_value]
+        return [_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v)
+                for v in raw_value if v]
 
     def _on_get_storable(self, value: _List[_auth.AbstractUser], **kwargs) -> _Iterable[str]:
         """Hook
@@ -184,3 +185,31 @@ class Users(_odm.field.UniqueList):
                     for v in arg]
         else:
             return _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, arg).uid
+
+
+class UsersDict(_odm.field.Dict):
+    def __init__(self, name: str, **kwargs):
+        """Init.
+        """
+        self._allow_anonymous = kwargs.get('allow_anonymous', False)
+        self._allow_system = kwargs.get('allow_system', False)
+        self._disallowed_users = kwargs.get('disallowed_users', ())
+
+        super().__init__(name, **kwargs)
+
+    def _on_set(self, raw_value: _Union[dict, _frozendict], **kwargs):
+        try:
+            raw_value = dict(raw_value)
+        except (TypeError, ValueError):
+            raise TypeError("Field '{}': dict expected, got '{}'".format(self._name, type(raw_value)))
+
+        # Sanitize value
+        clean_value = {}
+        for k, v in raw_value.items():
+            clean_value[k] = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v).uid
+
+        return clean_value
+
+    def _on_get(self, value: dict, **kwargs) -> _Dict[str, _auth.AbstractUser]:
+        return {k: _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v)
+                for k, v in value.items()}
