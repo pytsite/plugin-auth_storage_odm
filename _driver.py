@@ -70,6 +70,7 @@ class Storage(_auth.driver.Storage):
 
         user_entity = f.first()  # type: _model.ODMUser
         if not user_entity:
+            # Hide exception details to logs
             _logger.warn("User not exist: login={}, nickname={}, uid={}".format(login, nickname, uid))
             raise _auth.error.UserNotFound()
 

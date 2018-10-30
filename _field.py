@@ -5,7 +5,8 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 from bson import DBRef as _DBRef
-from typing import Dict as _Dict, List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable
+from typing import Dict as _Dict, List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable, \
+    Any as _Any
 from frozendict import frozendict as _frozendict
 from plugins import auth as _auth, odm as _odm
 
@@ -197,19 +198,34 @@ class UsersDict(_odm.field.Dict):
 
         super().__init__(name, **kwargs)
 
+    def _on_set(self, raw_value: _Dict[_Any, _auth.AbstractUser], **kwargs):
+        try:
+            raw_value = dict(raw_value)
+        except (TypeError, ValueError):
+            raise TypeError("Field '{}': dict expected, got '{}'".format(self._name, type(raw_value)))
+
+        clean_value = {}
+        for k, v in raw_value.items():
+            clean_value[k] = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v)
+
+        return clean_value
+
+    def _on_get_storable(self, value: dict, **kwargs) -> _Dict[_Any, str]:
+        return {k: v.uid for k, v in value.items()}
+
+
+class UsersDictReversed(UsersDict):
     def _on_set(self, raw_value: _Union[dict, _frozendict], **kwargs):
         try:
             raw_value = dict(raw_value)
         except (TypeError, ValueError):
             raise TypeError("Field '{}': dict expected, got '{}'".format(self._name, type(raw_value)))
 
-        # Sanitize value
         clean_value = {}
         for k, v in raw_value.items():
-            clean_value[k] = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v).uid
+            clean_value[_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, k)] = v
 
         return clean_value
 
-    def _on_get(self, value: dict, **kwargs) -> _Dict[str, _auth.AbstractUser]:
-        return {k: _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v)
-                for k, v in value.items()}
+    def _on_get_storable(self, value: dict, **kwargs) -> _Dict[str, _Any]:
+        return {k.uid: v for k, v in value.items()}
