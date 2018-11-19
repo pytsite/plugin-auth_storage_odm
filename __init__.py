@@ -12,12 +12,15 @@ from pytsite import semver as _semver
 
 
 def plugin_load():
+    from pytsite import reg, util
     from plugins import auth, odm
     from . import _driver
 
     # ODM models
-    odm.register_model('role', ODMRole)
-    odm.register_model('user', ODMUser)
+    role_cls = util.get_module_attr(reg.get('auth_storage_odm.role_model_class', 'plugins.auth_storage_odm.ODMRole'))
+    user_cls = util.get_module_attr(reg.get('auth_storage_odm.user_model_class', 'plugins.auth_storage_odm.ODMUser'))
+    odm.register_model('role', role_cls)
+    odm.register_model('user', user_cls)
     odm.register_model('follower', ODMFollower)
     odm.register_model('blocked_user', ODMBlockedUser)
 

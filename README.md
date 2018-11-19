@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.3 (2018-11-19)
+
+New configuration parameters `auth_storage_odm.*_model_class` added.
+
+
 ### 4.2 (2018-10-30)
 
 New field `UsersDictReversed`.
