@@ -286,7 +286,7 @@ class User(_auth.model.AbstractUser):
         elif field_name == 'blocked_users_count':
             return _odm.find('blocked_user').eq('blocker', self).count()
 
-        return self._entity.f_get(field_name)
+        return self._entity.f_get(field_name, **kwargs)
 
     def set_field(self, field_name: str, value):
         super().set_field(field_name, value)

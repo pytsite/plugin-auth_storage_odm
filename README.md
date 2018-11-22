@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.3.1 (2018-11-22)
+
+Missing kwargs attribute fixed in `model.User`.
+
+
 ### 4.3 (2018-11-19)
 
 New configuration parameters `auth_storage_odm.*_model_class` added.
