@@ -10,7 +10,7 @@ from plugins import auth as _auth, odm as _odm, query as _query
 from . import _model
 
 _REG_ROLE_CLS = 'auth_storage_odm.role_class'
-_REG_USER_CLS = 'auth_storage_odm.role_class'
+_REG_USER_CLS = 'auth_storage_odm.user_class'
 
 
 class Storage(_auth.driver.Storage):

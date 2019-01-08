@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.4.1 (2018-01-08)
+
+Typo fixed.
+
+
 ### 4.4 (2018-01-08)
 
 - New configuration parameters `auth_storage_odm.*_class` added.
