@@ -17,10 +17,10 @@ def plugin_load():
     from . import _driver
 
     # ODM models
-    role_cls = util.get_module_attr(reg.get('auth_storage_odm.role_model_class', 'plugins.auth_storage_odm.ODMRole'))
-    user_cls = util.get_module_attr(reg.get('auth_storage_odm.user_model_class', 'plugins.auth_storage_odm.ODMUser'))
-    odm.register_model('role', role_cls)
-    odm.register_model('user', user_cls)
+    role_cls = reg.get('auth_storage_odm.role_odm_class', 'plugins.auth_storage_odm.ODMRole')
+    user_cls = reg.get('auth_storage_odm.user_odm_class', 'plugins.auth_storage_odm.ODMUser')
+    odm.register_model('role', util.get_module_attr(role_cls))
+    odm.register_model('user', util.get_module_attr(user_cls))
     odm.register_model('follower', ODMFollower)
     odm.register_model('blocked_user', ODMBlockedUser)
 
