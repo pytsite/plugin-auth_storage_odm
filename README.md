@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.5 (2019-03-04)
+
+Support of `odm-6.0`.
+
+
 ### 4.4.1 (2018-01-08)
 
 Typo fixed.

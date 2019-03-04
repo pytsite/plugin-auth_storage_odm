@@ -29,8 +29,8 @@ class ODMRole(_odm.model.Entity):
             ('description', _odm.I_TEXT),
         ], name='text_index')
 
-    def _pre_save(self, **kwargs):
-        super()._pre_save(**kwargs)
+    def _on_pre_save(self, **kwargs):
+        super()._on_pre_save(**kwargs)
 
         if self.is_new:
             self.f_set('uid', self.ref)
@@ -101,10 +101,10 @@ class ODMUser(_odm.model.Entity):
         """Hook
         """
         # Fields
-        self.define_field(_odm.field.String('uid', required=True))
-        self.define_field(_odm.field.String('login', required=True, max_length=_auth.LOGIN_MAX_LENGTH))
-        self.define_field(_odm.field.String('nickname', required=True, max_length=_auth.NICKNAME_MAX_LENGTH))
-        self.define_field(_odm.field.String('password', required=True))
+        self.define_field(_odm.field.String('uid', is_required=True))
+        self.define_field(_odm.field.String('login', is_required=True, max_length=_auth.LOGIN_MAX_LENGTH))
+        self.define_field(_odm.field.String('nickname', is_required=True, max_length=_auth.NICKNAME_MAX_LENGTH))
+        self.define_field(_odm.field.String('password', is_required=True))
         self.define_field(_odm.field.String('confirmation_hash'))
         self.define_field(_odm.field.Bool('is_public'))
         self.define_field(_odm.field.Virtual('is_confirmed'))
@@ -125,7 +125,7 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.Dict('options'))
         self.define_field(_file_storage_odm.field.Image('picture'))
         self.define_field(_file_storage_odm.field.Image('cover_picture'))
-        self.define_field(_odm.field.StringList('urls', unique=True))
+        self.define_field(_odm.field.UniqueStringList('urls'))
         self.define_field(_odm.field.Integer('follows_count'))
         self.define_field(_odm.field.Integer('followers_count'))
         self.define_field(_odm.field.Integer('blocked_users_count'))
@@ -219,10 +219,10 @@ class ODMUser(_odm.model.Entity):
             cnt += 1
             nickname = s + '-' + str(cnt)
 
-    def _pre_save(self, **kwargs):
+    def _on_pre_save(self, **kwargs):
         """Hook.
         """
-        super()._pre_save(**kwargs)
+        super()._on_pre_save(**kwargs)
 
         if self.is_new:
             self.f_set('uid', self.ref)
@@ -236,7 +236,7 @@ class ODMUser(_odm.model.Entity):
             m.update(self.f_get('login').encode('UTF-8'))
             self.f_set('nickname', m.hexdigest())
 
-    def _after_delete(self, **kwargs):
+    def _on_after_delete(self, **kwargs):
         """Hook
         """
         for f_name in ('picture', 'cover_picture'):
@@ -335,8 +335,8 @@ class User(_auth.model.AbstractUser):
 
 class ODMFollower(_odm.model.Entity):
     def _setup_fields(self):
-        self.define_field(_field.User('follower', required=True))
-        self.define_field(_field.User('follows', required=True))
+        self.define_field(_field.User('follower', is_required=True))
+        self.define_field(_field.User('follows', is_required=True))
 
     def _setup_indexes(self):
         self.define_index([('follower', _odm.I_ASC), ('follows', _odm.I_ASC)], True)
@@ -352,8 +352,8 @@ class ODMFollower(_odm.model.Entity):
 
 class ODMBlockedUser(_odm.model.Entity):
     def _setup_fields(self):
-        self.define_field(_field.User('blocker', required=True))
-        self.define_field(_field.User('blocked', required=True))
+        self.define_field(_field.User('blocker', is_required=True))
+        self.define_field(_field.User('blocked', is_required=True))
 
     def _setup_indexes(self):
         self.define_index([('blocker', _odm.I_ASC), ('blocked', _odm.I_ASC)], True)

@@ -12,7 +12,7 @@ from plugins import auth as _auth, odm as _odm
 
 
 def _resolve_user(allow_system: bool, allow_anonymous: bool, disallowed_users: _List[_auth.AbstractUser],
-                  value: _Union[_auth.AbstractUser, str, _DBRef]) -> _auth.AbstractUser:
+                  value: _Union[_auth.AbstractUser, str, _DBRef]) -> _Optional[_auth.AbstractUser]:
     """Helper
     """
     if isinstance(value, _auth.AbstractUser):
@@ -53,12 +53,7 @@ class Roles(_odm.field.UniqueList):
         else:
             raise TypeError("Field '{}': role object, str or DB ref expected, got {}".format(self.name, type(value)))
 
-    def _on_get_storable(self, value: _List[_auth.AbstractRole], **kwargs) -> _Iterable[str]:
-        """Hook
-        """
-        return [v.uid for v in value]
-
-    def _on_set(self, raw_value: _Union[list, tuple], **kwargs) -> _Iterable[_auth.AbstractRole]:
+    def _on_set(self, raw_value: _Any, **kwargs) -> _List[str]:
         """Hook
         """
         if raw_value is None:
@@ -67,16 +62,25 @@ class Roles(_odm.field.UniqueList):
         if not isinstance(raw_value, (list, tuple)):
             raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
-        return [self._resolve_role(r) for r in raw_value if r]
+        return [self._resolve_role(r).uid for r in raw_value if r]
 
-    def _on_add(self, current_value: _List[_auth.AbstractRole], raw_value_to_add, **kwargs):
-        return super()._on_add(current_value, self._resolve_role(raw_value_to_add))
+    def _on_get(self, value: _List[str], **kwargs) -> _List[_auth.AbstractRole]:
+        """Hook
+        """
+        return [_auth.get_role(uid=v) for v in value]
 
-    def _on_sub(self, current_value: _List[_auth.AbstractRole], raw_value_to_sub, **kwargs):
-        return super()._on_sub(current_value, self._resolve_role(raw_value_to_sub))
+    def _on_add(self, current_value: _List[str], raw_value_to_add, **kwargs):
+        """Hook
+        """
+        return super()._on_add(current_value, self._resolve_role(raw_value_to_add).uid)
+
+    def _on_sub(self, current_value: _List[str], raw_value_to_sub, **kwargs):
+        """Hook
+        """
+        return super()._on_sub(current_value, self._resolve_role(raw_value_to_sub).uid)
 
     def sanitize_finder_arg(self, arg):
-        """Hook. Used for sanitizing Finder's query argument.
+        """Hook
         """
         if isinstance(arg, _auth.model.AbstractRole):
             return arg.uid
@@ -92,7 +96,7 @@ class Roles(_odm.field.UniqueList):
             return arg
 
 
-class User(_odm.field.Abstract):
+class User(_odm.field.Base):
     """Field to store reference to user
     """
 
@@ -105,7 +109,7 @@ class User(_odm.field.Abstract):
 
         super().__init__(name, **kwargs)
 
-    def _on_set(self, raw_value, **kwargs) -> _Optional[_auth.AbstractUser]:
+    def _on_get(self, raw_value, **kwargs) -> _Optional[_auth.AbstractUser]:
         """Hook
         """
         if raw_value is None:
@@ -113,10 +117,13 @@ class User(_odm.field.Abstract):
 
         return _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value)
 
-    def _on_get_storable(self, value: _Optional[_auth.AbstractUser], **kwargs) -> _Optional[str]:
+    def _on_set(self, raw_value: _Optional[_auth.AbstractUser], **kwargs) -> _Optional[str]:
         """Hook
         """
-        return value.uid if value else None
+        if raw_value is None:
+            return None
+
+        return _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value).uid
 
     def sanitize_finder_arg(self, arg):
         """Hook. Used for sanitizing Finder's query argument.
@@ -153,7 +160,7 @@ class Users(_odm.field.UniqueList):
 
         super().__init__(name, allowed_types=(_auth.model.AbstractUser,), **kwargs)
 
-    def _on_set(self, raw_value: _Union[list, tuple], **kwargs) -> _Iterable[_auth.AbstractUser]:
+    def _on_set(self, raw_value: _Union[list, tuple], **kwargs) -> _List[str]:
         """Hook
         """
         if raw_value is None:
@@ -162,23 +169,25 @@ class Users(_odm.field.UniqueList):
         if not isinstance(raw_value, (list, tuple)):
             raise TypeError("Field '{}': list or tuple expected, got {}".format(self.name, type(raw_value)))
 
-        return [_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v)
+        return [_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v).uid
                 for v in raw_value if v]
 
-    def _on_get_storable(self, value: _List[_auth.AbstractUser], **kwargs) -> _Iterable[str]:
+    def _on_get(self, value: _List[str], **kwargs) -> _List[_auth.AbstractUser]:
         """Hook
         """
-        return [v.uid for v in value]
+        return [_auth.get_user(uid=uid) for uid in value]
 
-    def _on_add(self, current_value: _List[_auth.AbstractUser], raw_value_to_add, **kwargs):
+    def _on_add(self, current_value: _List[str], raw_value_to_add: _Any, **kwargs):
+        """Hook
+        """
         u = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value_to_add)
+        return super()._on_add(current_value, u.uid)
 
-        return super()._on_add(current_value, u)
-
-    def _on_sub(self, current_value: _List[_auth.AbstractUser], raw_value_to_sub, **kwargs):
+    def _on_sub(self, current_value: _List[str], raw_value_to_sub: _Any, **kwargs):
+        """Hook
+        """
         u = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value_to_sub)
-
-        return super()._on_sub(current_value, u)
+        return super()._on_sub(current_value, u.uid)
 
     def sanitize_finder_arg(self, arg):
         if isinstance(arg, (list, tuple)):
@@ -198,7 +207,7 @@ class UsersDict(_odm.field.Dict):
 
         super().__init__(name, **kwargs)
 
-    def _on_set(self, raw_value: _Dict[_Any, _auth.AbstractUser], **kwargs):
+    def _on_set(self, raw_value: dict, **kwargs) -> _Dict[str, str]:
         try:
             raw_value = dict(raw_value)
         except (TypeError, ValueError):
@@ -206,16 +215,20 @@ class UsersDict(_odm.field.Dict):
 
         clean_value = {}
         for k, v in raw_value.items():
-            clean_value[k] = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v)
+            clean_value[k] = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, v).uid
 
         return clean_value
 
-    def _on_get_storable(self, value: dict, **kwargs) -> _Dict[_Any, str]:
-        return {k: v.uid for k, v in value.items()}
+    def _on_get(self, value: _Dict[str, str], **kwargs) -> _Dict[_Any, _auth.AbstractUser]:
+        """Hook
+        """
+        return {k: _auth.get_user(uid=v) for k, v in value.items()}
 
 
 class UsersDictReversed(UsersDict):
-    def _on_set(self, raw_value: _Union[dict, _frozendict], **kwargs):
+    def _on_set(self, raw_value: dict, **kwargs) -> [str, _Any]:
+        """Hook
+        """
         try:
             raw_value = dict(raw_value)
         except (TypeError, ValueError):
@@ -223,9 +236,9 @@ class UsersDictReversed(UsersDict):
 
         clean_value = {}
         for k, v in raw_value.items():
-            clean_value[_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, k)] = v
+            clean_value[_resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, k).uid] = v
 
         return clean_value
 
-    def _on_get_storable(self, value: dict, **kwargs) -> _Dict[str, _Any]:
+    def _on_get(self, value: dict, **kwargs) -> _Dict[_auth.AbstractUser, _Any]:
         return {k.uid: v for k, v in value.items()}
