@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.7 (2019-03-09)
+
+Support of `auth-3.15`.
+
+
 ### 4.6 (2019-03-09)
 
 Support of `auth-3.14`.

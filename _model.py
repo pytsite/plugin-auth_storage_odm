@@ -133,10 +133,11 @@ class ODMUser(_odm.model.Entity):
         self.define_field(_odm.field.String('country', max_length=_auth.COUNTRY_MAX_LENGTH))
         self.define_field(_odm.field.String('province', max_length=_auth.PROVINCE_MAX_LENGTH))
         self.define_field(_odm.field.String('city', max_length=_auth.CITY_MAX_LENGTH))
+        self.define_field(_odm.field.String('district', max_length=_auth.DISTRICT_MAX_LENGTH))
         self.define_field(_odm.field.String('street', max_length=_auth.STREET_MAX_LENGTH))
-        self.define_field(_odm.field.String('house_number', max_length=_auth.HOUSE_NUMBER_MAX_LENGTH))
+        self.define_field(_odm.field.String('building', max_length=_auth.BUILDING_MAX_LENGTH))
         self.define_field(_odm.field.String('apt_number', max_length=_auth.APT_NUMBER_MAX_LENGTH))
-        self.define_field(_odm.field.String('postal_code', max_length=10))
+        self.define_field(_odm.field.String('postal_code', max_length=_auth.POSTAL_CODE_MAX_LENGTH))
 
     def _setup_indexes(self):
         """Hook.
@@ -147,7 +148,7 @@ class ODMUser(_odm.model.Entity):
         self.define_index([('last_sign_in', _odm.I_DESC)])
 
         text_index_fields = ['login', 'nickname', 'first_name', 'last_name', 'position', 'city', 'country', 'province',
-                             'street', 'phone']
+                             'district', 'street', 'phone']
         text_index = []
         for f_name in text_index_fields:
             if self.has_field(f_name) and isinstance(self.get_field(f_name), _odm.field.String):
