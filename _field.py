@@ -241,4 +241,4 @@ class UsersDictReversed(UsersDict):
         return clean_value
 
     def _on_get(self, value: dict, **kwargs) -> _Dict[_auth.AbstractUser, _Any]:
-        return {k.uid: v for k, v in value.items()}
+        return {_auth.get_user(uid=k): v for k, v in value.items()}

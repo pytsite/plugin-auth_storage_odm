@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.7.1 (2019-03-11)
+
+Error in `field.UsersDictReversed` fixed.
+
+
 ### 4.7 (2019-03-09)
 
 Support of `auth-3.15`.
