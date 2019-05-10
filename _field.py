@@ -5,9 +5,7 @@ __email__ = 'a@shepetko.com'
 __license__ = 'MIT'
 
 from bson import DBRef as _DBRef
-from typing import Dict as _Dict, List as _List, Optional as _Optional, Union as _Union, Iterable as _Iterable, \
-    Any as _Any
-from frozendict import frozendict as _frozendict
+from typing import Dict as _Dict, List as _List, Optional as _Optional, Union as _Union, Any as _Any
 from plugins import auth as _auth, odm as _odm
 
 
@@ -69,15 +67,15 @@ class Roles(_odm.field.UniqueList):
         """
         return [_auth.get_role(uid=v) for v in value]
 
-    def _on_add(self, current_value: _List[str], raw_value_to_add, **kwargs):
+    def _on_add(self, current_value: tuple, raw_value_to_add, **kwargs):
         """Hook
         """
-        return super()._on_add(current_value, self._resolve_role(raw_value_to_add).uid)
+        return super()._on_add(current_value, self._resolve_role(raw_value_to_add))
 
-    def _on_sub(self, current_value: _List[str], raw_value_to_sub, **kwargs):
+    def _on_sub(self, current_value: tuple, raw_value_to_sub, **kwargs):
         """Hook
         """
-        return super()._on_sub(current_value, self._resolve_role(raw_value_to_sub).uid)
+        return super()._on_sub(current_value, self._resolve_role(raw_value_to_sub))
 
     def sanitize_finder_arg(self, arg):
         """Hook
@@ -177,17 +175,17 @@ class Users(_odm.field.UniqueList):
         """
         return [_auth.get_user(uid=uid) for uid in value]
 
-    def _on_add(self, current_value: _List[str], raw_value_to_add: _Any, **kwargs):
+    def _on_add(self, current_value: tuple, raw_value_to_add: _Any, **kwargs):
         """Hook
         """
         u = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value_to_add)
-        return super()._on_add(current_value, u.uid)
+        return super()._on_add(current_value, u)
 
-    def _on_sub(self, current_value: _List[str], raw_value_to_sub: _Any, **kwargs):
+    def _on_sub(self, current_value: tuple, raw_value_to_sub: _Any, **kwargs):
         """Hook
         """
         u = _resolve_user(self._allow_system, self._allow_anonymous, self._disallowed_users, raw_value_to_sub)
-        return super()._on_sub(current_value, u.uid)
+        return super()._on_sub(current_value, u)
 
     def sanitize_finder_arg(self, arg):
         if isinstance(arg, (list, tuple)):

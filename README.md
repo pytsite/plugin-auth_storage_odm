@@ -4,6 +4,11 @@
 ## Changelog
 
 
+### 4.8 (2019-05-10)
+
+Support of `odm-6.7`.
+
+
 ### 4.7.1 (2019-03-11)
 
 Error in `field.UsersDictReversed` fixed.
