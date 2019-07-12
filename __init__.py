@@ -8,7 +8,9 @@ __license__ = 'MIT'
 from . import _model as model, _field as field
 from ._api import on_odm_setup_fields_role, on_odm_setup_fields_user
 from ._model import User, Role, ODMRole, ODMUser, ODMBlockedUser, ODMFollower
-from pytsite import semver as _semver
+
+# Locally needed imports
+from semaver import Version as _Version
 
 
 def plugin_load():
@@ -28,7 +30,7 @@ def plugin_load():
     auth.register_storage_driver(_driver.Storage())
 
 
-def plugin_update(v_from: _semver.Version):
+def plugin_update(v_from: _Version):
     # Field 'uid' added to users and roles
     if v_from <= '2.3':
         from pytsite import console, mongodb
